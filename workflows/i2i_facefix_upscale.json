@@ -1,0 +1,207 @@
+{
+  "1": {
+    "inputs": {
+      "ckpt_name": "revAnimatedFp16_122.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  },
+  "2": {
+    "inputs": {
+      "vae_name": "vaeFtMse840000Ema_v10.safetensors"
+    },
+    "class_type": "VAELoader"
+  },
+  "4": {
+    "inputs": {
+      "text": "girl",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "5": {
+    "inputs": {
+      "text": "low quality, worst quality, embedding:badhandv4, blurred, deformed, embedding:EasyNegative,  embedding:badq    uality, watermark, text, font, signage, artist name, text, caption, jpeg artifacts",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "6": {
+    "inputs": {
+      "image": "msg1878030077-48225.jpg",
+      "choose file to upload": "image"
+    },
+    "class_type": "LoadImage"
+  },
+  "11": {
+    "inputs": {
+      "add_noise": "enable",
+      "noise_seed": 1052903618690650,
+      "steps": 30,
+      "cfg": 8,
+      "sampler_name": "uni_pc",
+      "scheduler": "normal",
+      "start_at_step": 0,
+      "end_at_step": 10000,
+      "return_with_leftover_noise": "disable",
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "15",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "latent_image": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "KSamplerAdvanced"
+  },
+  "12": {
+    "inputs": {
+      "samples": [
+        "11",
+        0
+      ],
+      "vae": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "VAEDecode"
+  },
+  "13": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "SaveImage"
+  },
+  "14": {
+    "inputs": {
+      "control_net_name": "control_v11f1e_sd15_tile.pth"
+    },
+    "class_type": "ControlNetLoader"
+  },
+  "15": {
+    "inputs": {
+      "strength": 1,
+      "conditioning": [
+        "4",
+        0
+      ],
+      "control_net": [
+        "14",
+        0
+      ],
+      "image": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "ControlNetApply"
+  },
+  "16": {
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage"
+  },
+  "18": {
+    "inputs": {
+      "upscale_model": [
+        "19",
+        0
+      ],
+      "image": [
+        "20",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel"
+  },
+  "19": {
+    "inputs": {
+      "model_name": "8xNMKDFaces160000G_v10.pt"
+    },
+    "class_type": "UpscaleModelLoader"
+  },
+  "20": {
+    "inputs": {
+      "guide_size": 256,
+      "guide_size_for": true,
+      "max_size": 512,
+      "seed": 948415836421210,
+      "steps": 20,
+      "cfg": 8,
+      "sampler_name": "dpmpp_2s_ancestral",
+      "scheduler": "normal",
+      "denoise": 0.5,
+      "feather": 5,
+      "noise_mask": true,
+      "force_inpaint": true,
+      "bbox_threshold": 0.5,
+      "bbox_dilation": 10,
+      "bbox_crop_factor": 3,
+      "sam_detection_hint": "center-1",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 10,
+      "wildcard": "",
+      "image": [
+        "12",
+        0
+      ],
+      "model": [
+        "1",
+        0
+      ],
+      "clip": [
+        "1",
+        1
+      ],
+      "vae": [
+        "2",
+        0
+      ],
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "bbox_detector": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "FaceDetailer"
+  },
+  "23": {
+    "inputs": {
+      "model_name": "bbox/face_yolov8m.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider"
+  }
+}

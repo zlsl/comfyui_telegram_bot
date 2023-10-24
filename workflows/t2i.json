@@ -1,0 +1,85 @@
+{
+  "48": {
+    "inputs": {
+      "seed": 1013682419639747,
+      "steps": 30,
+      "cfg": 7.5,
+      "sampler_name": "uni_pc",
+      "scheduler": "karras",
+      "denoise": 1,
+      "preview_method": "none",
+      "vae_decode": "true",
+      "model": [
+        "163",
+        0
+      ],
+      "positive": [
+        "97",
+        0
+      ],
+      "negative": [
+        "98",
+        0
+      ],
+      "latent_image": [
+        "164",
+        0
+      ],
+      "optional_vae": [
+        "96",
+        0
+      ]
+    },
+    "class_type": "KSampler (Efficient)"
+  },
+  "96": {
+    "inputs": {
+      "vae_name": "vaeFtMse840000Ema_v10.safetensors"
+    },
+    "class_type": "VAELoader"
+  },
+  "97": {
+    "inputs": {
+      "text": "photo of prompt",
+      "clip": [
+        "163",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "98": {
+    "inputs": {
+      "text": "low quality, worst quality, embedding:badhandv4, blurred, deformed, embedding:EasyNegative,  embedding:badquality, watermark, text, font, signage, artist name, text, caption, jpeg artifacts",
+      "clip": [
+        "163",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "138": {
+    "inputs": {
+      "filename_prefix": "bot",
+      "images": [
+        "48",
+        5
+      ]
+    },
+    "class_type": "SaveImage"
+  },
+  "163": {
+    "inputs": {
+      "ckpt_name": "revAnimated_v121Inp-inpainting.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  },
+  "164": {
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage"
+  }
+}
