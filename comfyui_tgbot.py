@@ -304,7 +304,6 @@ def message_reply(message):
 def message_reply(message):
     log.info("I2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.caption)
     prompt = message.caption
-    print(message)
     wf = wf_i2i
     if ('/face ' in prompt):
         wf = wf_i2i_facefix_upscale
