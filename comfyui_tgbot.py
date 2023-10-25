@@ -28,6 +28,7 @@ with open('config.yaml') as f:
     DEFAULT_MODEL = config['comfyui']['DEFAULT_MODEL']
     DEFAULT_VAE = config['comfyui']['DEFAULT_VAE']
     DEFAULT_CONTROLNET = config['comfyui']['DEFAULT_CONTROLNET']
+    DEFAULT_UPSCALER = config['comfyui']['DEFAULT_UPSCALER']
     NEGATIVE_PROMPT = config['comfyui']['NEGATIVE_PROMPT']
     BEAUTIFY_PROMPT = config['comfyui']['BEAUTIFY_PROMPT']
     DEFAULT_WIDTH = config['comfyui']['DEFAULT_WIDTH']
@@ -142,7 +143,11 @@ def setup_workflow(wf, prompt, source_image = ''):
             if (workflow[node]['inputs']['image'] == 'source image'):
                workflow[node]['inputs']['image'] = source_image
 
-#    print(json.dumps(workflow, indent=2))
+        if ("model_name" in workflow[node]['inputs']):
+            if (workflow[node]['class_type'] == 'UpscaleModelLoader'):
+               workflow[node]['inputs']['model_name'] = DEFAULT_UPSCALER
+
+    print(json.dumps(workflow, indent=2))
 
     return workflow
 
