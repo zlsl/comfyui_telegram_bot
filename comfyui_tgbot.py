@@ -22,6 +22,7 @@ with open('config.yaml') as f:
 
     TRANSLATE = config['bot']['TRANSLATE']
     HELP_TEXT = config['bot']['HELP_TEXT']
+    DENY_TEXT = config['bot']['DENY_TEXT']
 
     DEFAULT_MODEL = config['comfyui']['DEFAULT_MODEL']
     DEFAULT_VAE = config['comfyui']['DEFAULT_VAE']
@@ -56,11 +57,23 @@ with open('workflows/t2i_upscale.json') as json_file:
     wf_t2i_upscale = json.load(json_file)
 
 
+def check_access(id):
+    if (config['whitelist'] is None): # Allow all, whitelist is empty
+        return True
+
+    if (id in config['whitelist']):
+        return True
+
+    bot.send_message(chat_id=id, text=DENY_TEXT)
+    return False
+
+
 def queue_prompt(prompt):
     p = {"prompt": prompt, "client_id": client_id}
     data = json.dumps(p).encode('utf-8')
     req =  urllib.request.Request("http://{}/prompt".format(SERVER_ADDRESS), data=data)
     return json.loads(urllib.request.urlopen(req).read())
+
 
 def get_image(filename, subfolder, folder_type):
     data = {"filename": filename, "subfolder": subfolder, "type": folder_type}
@@ -68,9 +81,11 @@ def get_image(filename, subfolder, folder_type):
     with urllib.request.urlopen("http://{}/view?{}".format(SERVER_ADDRESS, url_values)) as response:
         return response.read()
 
+
 def get_history(prompt_id):
     with urllib.request.urlopen("http://{}/history/{}".format(SERVER_ADDRESS, prompt_id)) as response:
         return json.loads(response.read())
+
 
 def get_images(ws, prompt):
     prompt_id = queue_prompt(prompt)['prompt_id']
@@ -100,9 +115,10 @@ def get_images(ws, prompt):
     return output_images
 
 
-
-
 def t2i(chat, prompts, target_workflow):
+    if not check_access(chat.id):
+        return
+
     orig = prompts
 
     workflow = target_workflow
@@ -164,6 +180,9 @@ def t2i(chat, prompts, target_workflow):
 
 
 def i2i(chat, prompts, target_workflow, photo):
+    if not check_access(chat.id):
+        return
+
     imf = bot.get_file(photo[len(photo)-1].file_id)
     imgf = bot.download_file(imf.file_path)
     fn = "source_" + str(random.randint(0, 6666666666666)) + ".png"
@@ -231,22 +250,24 @@ def i2i(chat, prompts, target_workflow, photo):
             bot.send_document(chat_id=chat.id, document=pd)
 
 
-
 @bot.message_handler(commands=['help'])
 @bot.message_handler(commands=['start'])
 def start_message(message):
     print(message.chat)
     bot.send_message(chat_id=message.chat.id, text=HELP_TEXT)
 
+
 @bot.message_handler(commands=['face'])
 def start_message(message):
     print(message.chat)
     t2i(message.chat, message.text.replace("/face", ""), wf_t2i_facefix_upscale)
 
+
 @bot.message_handler(commands=['upscale'])
 def start_message(message):
     print(message.chat)
     t2i(message.chat, message.text.replace("/upscale", ""), wf_t2i_upscale)
+
 
 @bot.message_handler(content_types='text')
 def message_reply(message):
@@ -259,7 +280,5 @@ def message_reply(message):
     i2i(message.chat, message.caption, wf_i2i, message.photo)
 
 
-
 if __name__ == '__main__':
     bot.infinity_polling()
-

@@ -4,6 +4,7 @@ network:
 
 bot:
   TRANSLATE: True
+  DENY_TEXT: "Access denied"
   HELP_TEXT: "Для генерации можно использовать текст на русском языке
 По-умолчанию каритнка создаётся в разрешении 512x512 пикселей
 В промпте можно указать размер ШИРИНА*ВЫСОТА, допустимые значения: 512, 768, 1024. Например - 1024*512
@@ -20,3 +21,4 @@ comfyui:
   DEFAULT_HEIGHT: 512
   NEGATIVE_PROMPT: 'low quality, worst quality, embedding:badhandv4, blurred, deformed, embedding:EasyNegative, embedding:badquality, watermark, text, font, signage, artist name, text, caption, jpeg artifacts'
 
+whitelist:
