@@ -13,6 +13,7 @@ if not os.path.exists('config.yaml'):
     log.critical("No config.yaml file found!")
     sys.exit(os.EX_CONFIG) 
 
+import copy
 import re
 import io
 import telebot
@@ -100,7 +101,7 @@ def check_access(id):
 
 
 def setup_workflow(wf, prompt, source_image = ''):
-    workflow = wf
+    workflow = copy.deepcopy(wf)
     seed = random.randint(1, 18446744073709519872)
 
     if TRANSLATE:
@@ -303,6 +304,7 @@ def message_reply(message):
 def message_reply(message):
     log.info("I2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.caption)
     prompt = message.caption
+    print(message)
     wf = wf_i2i
     if ('/face ' in prompt):
         wf = wf_i2i_facefix_upscale
