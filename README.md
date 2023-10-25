@@ -30,6 +30,7 @@ bot:
 
 comfyui:
   DEFAULT_MODEL: 'revAnimatedFp16_122.safetensors' - имя модели по-умолчанию
+  DEFAULT_VAE: 'vaeFtMse840000Ema_v10.safetensors' - имя VAE модели по-умолчанию
   SAMPLER: 'uni_pc' - используемый сэмплер
   SAMPLER_STEPS: 30 - количество шагов денойса
   DEFAULT_WIDTH: 512
