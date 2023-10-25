@@ -13,6 +13,7 @@ bot:
 
 comfyui:
   DEFAULT_MODEL: 'revAnimatedFp16_122.safetensors'
+  DEFAULT_VAE: 'vaeFtMse840000Ema_v10.safetensors'
   SAMPLER: 'uni_pc'
   SAMPLER_STEPS: 30
   DEFAULT_WIDTH: 512

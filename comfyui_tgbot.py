@@ -23,6 +23,7 @@ with open('config.yaml') as f:
     HELP_TEXT = config['bot']['HELP_TEXT']
 
     DEFAULT_MODEL = config['comfyui']['DEFAULT_MODEL']
+    DEFAULT_VAE = config['comfyui']['DEFAULT_VAE']
     NEGATIVE_PROMPT = config['comfyui']['NEGATIVE_PROMPT']
     DEFAULT_WIDTH = config['comfyui']['DEFAULT_WIDTH']
     DEFAULT_HEIGHT = config['comfyui']['DEFAULT_HEIGHT']
@@ -99,6 +100,7 @@ def t2i(chat, prompts, target_workflow):
     workflow = target_workflow
     workflow["48"]["inputs"]["seed"] = random.randint(1, 99999999999999) 
     workflow["163"]["inputs"]["ckpt_name"] = DEFAULT_MODEL 
+    workflow["96"]["inputs"]["vae_name"] = DEFAULT_VAE 
 
     workflow["164"]["inputs"]["width"] = DEFAULT_WIDTH
     workflow["164"]["inputs"]["height"] = DEFAULT_HEIGHT
@@ -164,6 +166,7 @@ def i2i(chat, prompts, target_workflow, photo):
 
     workflow = target_workflow
     workflow["1"]["inputs"]["ckpt_name"] = DEFAULT_MODEL 
+    workflow["22"]["inputs"]["vae_name"] = DEFAULT_VAE 
     workflow["11"]["inputs"]["noise_seed"] = random.randint(1, 99999999999999)
     workflow["6"]["inputs"]["image"] = "/zstorage/fast1/bots/comfybot/img2img/" + fn 
 
