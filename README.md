@@ -46,6 +46,10 @@ comfyui:
 
 Если боту отправить картинку, то картинка будет преобразована, согласно промпту, в данном случае команды `/face`, `/upscale` также работают. Важно! Для img2img использутеся COntrolNet, а не классический денойс,что позволяет дать максимально приближенный к оригиналу результат.
 
+Исходная картинка | Результат
+--- | ---
+![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_src.jpg) | ![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_result.jpg)
+
 В каталоге img2img сохраняются картинки отправленные боту
 
 Каталог tmp - результаты генераций
