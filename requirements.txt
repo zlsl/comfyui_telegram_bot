@@ -1,9 +1,10 @@
+colorama==0.4.6
 coloredlogs==15.0.1
 deep-translator==1.11.4
 Pillow==10.1.0
 pyTelegramBotAPI==4.14.0
 PyYAML==6.0.1
 requests==2.31.0
+sanitize-filename==1.2.0
 urllib3==2.0.7
 websocket-client==1.6.4
-

@@ -24,6 +24,7 @@ import json
 import yaml
 import urllib.request
 import urllib.parse
+from sanitize_filename import sanitize
 
 with open('config.yaml') as f:
     config = yaml.safe_load(f)
@@ -226,7 +227,7 @@ def t2i(chat, prompts, target_workflow):
         for image_data in images[node_id]:
             image = Image.open(io.BytesIO(image_data))
             bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
-            tmpn = "tmp/img_" + str(random.randint(0, 55555555555555)) + ".png"
+            tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts) + "_" + str(random.randint(0, 55555555555555)) + ".png"
             png = Image.open(io.BytesIO(image_data))
             png.save(tmpn)
             pd = open(tmpn, 'rb')
@@ -239,7 +240,7 @@ def i2i(chat, prompts, target_workflow, photo):
 
     imf = bot.get_file(photo[len(photo)-1].file_id)
     imgf = bot.download_file(imf.file_path)
-    fn = "source_" + str(random.randint(0, 6666666666666)) + ".png"
+    fn = "source_" + str(chat.id) + "_" + str(random.randint(0, 6666666666666)) + ".png"
     with open("img2img/" + fn, 'wb') as new_file:
         new_file.write(imgf)    
 
@@ -253,7 +254,7 @@ def i2i(chat, prompts, target_workflow, photo):
         for image_data in images[node_id]:
             image = Image.open(io.BytesIO(image_data))
             bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
-            tmpn = "tmp/img_" + str(random.randint(0, 55555555555555)) + ".png"
+            tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts) + "_" + str(random.randint(0, 55555555555555)) + ".png"
             png = Image.open(io.BytesIO(image_data))
             png.save(tmpn)
             pd = open(tmpn, 'rb')
