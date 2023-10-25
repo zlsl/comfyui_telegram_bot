@@ -81,3 +81,54 @@ whitelist:
   - uid1
   - uid2
 ```
+
+## Как добавить свой workflow
+
+Используются следующий файлы:
+
+- t2i.json - базовый text2image
+- t2i_upscale.json - text2image с апскейлом
+- t2i_facefix_upscale.json - text2image с апскейлом и фиксом лиц
+- i2i.json - базовый image2image
+- i2i_upscale.json - image2image с апскейлом
+- i2i_facefix_upscale.json - image2image с апскейлом и фиксом лиц
+
+В ComfyUI необходимо включить dev режим (в настройках), появится пункт меню *Save (API Format)*
+
+В workflow необходимо:
+
+1. В тексте с ClipTextEncode для позитивного промпта поставить значение `positive  prompt`
+2. В тексте с ClipTextEncode для негативного промпта поставить значение `negative  prompt`
+3. Для image2image в коде json файла выставить в блоке `LoadImage` значение "inputs" - "image" в *source image*
+
+Пример фрагмента json:
+
+```
+"4": {
+    "inputs": {
+      "text": "positive prompt",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "5": {
+    "inputs": {
+      "text": "negative prompt",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "6": {
+    "inputs": {
+      "image": "source image",
+      "choose file to upload": "image"
+    },
+    "class_type": "LoadImage"
+  },
+```
