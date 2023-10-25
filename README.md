@@ -24,7 +24,7 @@ bot:
   DENY_MESSAGE: "Access denied" - Сообщение, если пользователь не в белом списке
   HELP_TEXT: "Для генерации можно использовать текст на русском языке
 По-умолчанию каритнка создаётся в разрешении 512x512 пикселей
-В промпте можно указать размер ШИРИНА*ВЫСОТА, допустимые значения: 512, 768, 1024. Например - 1024*512
+В промпте можно указать размер ШИРИНАхВЫСОТА. Например - 1024x512.
 Команды:
 /upscale .... - создаст картинку высокого разрешения
 /face .... - исправит дефекты лиц"
@@ -32,10 +32,14 @@ bot:
 comfyui:
   DEFAULT_MODEL: 'revAnimatedFp16_122.safetensors' - имя модели по-умолчанию
   DEFAULT_VAE: 'vaeFtMse840000Ema_v10.safetensors' - имя VAE модели по-умолчанию
+  DEFAULT_CONTROLNET: 'control_v11f1e_sd15_tile.pth' - модель ControlNet для image2image
   SAMPLER: 'uni_pc' - используемый сэмплер
   SAMPLER_STEPS: 30 - количество шагов денойса
   DEFAULT_WIDTH: 512
   DEFAULT_HEIGHT: 512
+  MAX_WIDTH: 2048 - ограничение ширины     
+  MAX_HEIGHT: 2048 - ограничение высоты
+  BEAUTIFY_PROMPT: ',masterpiece, perfect, small details, highly detailed, best, high quality, professional photo' - добавляется к промпту
   NEGATIVE_PROMPT: 'low quality, worst quality, embedding:badhandv4, blurred, deformed, embedding:EasyNegative, embedding:badquality, watermark, text, font, signage, artist name, text, caption, jpeg artifacts' - настройте под свои нужды негативный промпт
 ```
 
@@ -43,7 +47,7 @@ comfyui:
 
 Используются различные workflow для генерации, в каталоги workflows они находятся в формате ComfyUI API
 
-По-умолчанию при получении чистого промпта генерируется картинка с размерами DEFAULT_WIDTH x DEFAULT_HEIGHT, размер можно указывать в формате WIDTH*HEIGHT, допустимые размерности - 512, 768, 1024
+По-умолчанию при получении чистого промпта генерируется картинка с размерами DEFAULT_WIDTHxDEFAULT_HEIGHT, размер можно указывать в формате WIDTHxHEIGHT
 
 Ответом от бота будут два сообщения: картинка (с потерей качетсва из-за сжатия телеграмом) и PNG файл с исходным качеством.
 
@@ -51,7 +55,7 @@ comfyui:
 
 Исходная картинка | Результат
 --- | ---
-![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_src.jpg) | ![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_result.jpg) Милый демон с белой змеиной чешуёй, изумрудные глаза, острые когти 1024\*1024
+![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_src.jpg) | ![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_result.jpg) Милый демон с белой змеиной чешуёй, изумрудные глаза, острые когти 1024x1024
 
 
 В каталоге img2img сохраняются картинки отправленные боту
