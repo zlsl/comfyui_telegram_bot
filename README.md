@@ -97,8 +97,8 @@ whitelist:
 
 В workflow необходимо:
 
-1. В тексте с ClipTextEncode для позитивного промпта поставить значение `positive  prompt`
-2. В тексте с ClipTextEncode для негативного промпта поставить значение `negative  prompt`
+1. В тексте с ClipTextEncode для позитивного промпта поставить значение `positive prompt`
+2. В тексте с ClipTextEncode для негативного промпта поставить значение `negative prompt`
 3. Для image2image в коде json файла выставить в блоке `LoadImage` значение "inputs" - "image" в *source image*
 
 Пример фрагмента json:
