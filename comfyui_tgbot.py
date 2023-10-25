@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import telebot
+import re
 import io
 import os
 import random
@@ -26,9 +27,13 @@ with open('config.yaml') as f:
 
     DEFAULT_MODEL = config['comfyui']['DEFAULT_MODEL']
     DEFAULT_VAE = config['comfyui']['DEFAULT_VAE']
+    DEFAULT_CONTROLNET = config['comfyui']['DEFAULT_CONTROLNET']
     NEGATIVE_PROMPT = config['comfyui']['NEGATIVE_PROMPT']
+    BEAUTIFY_PROMPT = config['comfyui']['BEAUTIFY_PROMPT']
     DEFAULT_WIDTH = config['comfyui']['DEFAULT_WIDTH']
     DEFAULT_HEIGHT = config['comfyui']['DEFAULT_HEIGHT']
+    MAX_WIDTH = config['comfyui']['MAX_WIDTH']
+    MAX_HEIGHT = config['comfyui']['MAX_HEIGHT']
     SAMPLER = config['comfyui']['SAMPLER']
     SAMPLER_STEPS = config['comfyui']['SAMPLER_STEPS']
 
@@ -46,6 +51,12 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 with open('workflows/i2i.json') as json_file:
     wf_i2i = json.load(json_file)
+
+with open('workflows/i2i_upscale.json') as json_file:
+    wf_i2i_upscale = json.load(json_file)
+
+with open('workflows/i2i_facefix_upscale.json') as json_file:
+    wf_i2i_facefix_upscale = json.load(json_file)
 
 with open('workflows/t2i.json') as json_file:
     wf_t2i = json.load(json_file)
@@ -66,6 +77,74 @@ def check_access(id):
 
     bot.send_message(chat_id=id, text=DENY_TEXT)
     return False
+
+
+def setup_workflow(wf, prompt, source_image = ''):
+    workflow = wf
+    seed = random.randint(1, 18446744073709519872)
+
+    if TRANSLATE:
+        prompt = GoogleTranslator(source='auto', target='en').translate(text=prompt)
+    prompt = prompt + BEAUTIFY_PROMPT
+
+    sizes = re.findall('\d+x\d+', prompt)
+    if sizes:
+        dimensions = sizes[0].split('x')
+        width = dimensions[0]
+        height = dimensions[1]
+        prompt = prompt.replace(sizes[0], '')
+    else:
+        width = DEFAULT_WIDTH
+        if (width > MAX_WIDTH):
+            width = MAX_WIDTH
+
+        height = DEFAULT_HEIGHT
+        if (height > MAX_HEIGHT):
+            width = MAX_HEIGHT
+
+    for node in workflow:
+        if ("ckpt_name" in workflow[node]['inputs']):
+            workflow[node]['inputs']['ckpt_name'] = DEFAULT_MODEL
+
+        if ("vae_name" in workflow[node]['inputs']):
+            workflow[node]['inputs']['vae_name'] = DEFAULT_VAE
+
+        if ("control_net_name" in workflow[node]['inputs']):
+            workflow[node]['inputs']['control_net_name'] = DEFAULT_CONTROLNET
+
+        if ("width" in workflow[node]['inputs']):
+            workflow[node]['inputs']['width'] = width
+
+        if ("height" in workflow[node]['inputs']):
+            workflow[node]['inputs']['height'] = height
+
+        if ("seed" in workflow[node]['inputs']):
+            workflow[node]['inputs']['seed'] = seed
+
+        if ("noise_seed" in workflow[node]['inputs']):
+            workflow[node]['inputs']['noise_seed'] = seed
+
+        if ("sampler_name" in workflow[node]['inputs']):
+            workflow[node]['inputs']['sampler_name'] = SAMPLER
+
+        if ("steps" in workflow[node]['inputs']):
+            workflow[node]['inputs']['steps'] = SAMPLER_STEPS
+
+        if ("text" in workflow[node]['inputs']):
+            if (workflow[node]['inputs']['text'] == 'positive prompt'):
+               workflow[node]['inputs']['text'] = prompt
+
+        if ("text" in workflow[node]['inputs']):
+            if (workflow[node]['inputs']['text'] == 'negative prompt'):
+               workflow[node]['inputs']['text'] = NEGATIVE_PROMPT
+
+        if ("image" in workflow[node]['inputs']):
+            if (workflow[node]['inputs']['image'] == 'source image'):
+               workflow[node]['inputs']['image'] = source_image
+
+#    print(json.dumps(workflow, indent=2))
+
+    return workflow
 
 
 def queue_prompt(prompt):
@@ -119,50 +198,7 @@ def t2i(chat, prompts, target_workflow):
     if not check_access(chat.id):
         return
 
-    orig = prompts
-
-    workflow = target_workflow
-    workflow["48"]["inputs"]["seed"] = random.randint(1, 99999999999999) 
-    workflow["163"]["inputs"]["ckpt_name"] = DEFAULT_MODEL 
-    workflow["96"]["inputs"]["vae_name"] = DEFAULT_VAE 
-
-    workflow["164"]["inputs"]["width"] = DEFAULT_WIDTH
-    workflow["164"]["inputs"]["height"] = DEFAULT_HEIGHT
-
-    workflow["48"]["inputs"]["sampler_name"] = SAMPLER
-    workflow["48"]["inputs"]["steps"] = SAMPLER_STEPS
-
-    if ("512*" in prompts):
-        workflow["164"]["inputs"]["width"] = 512
-        prompts = prompts.replace("512", "")
-
-    if ("768*" in prompts):
-        workflow["164"]["inputs"]["width"] = 768
-        prompts = prompts.replace("768", "")
-
-    if ("1024*" in prompts):
-        workflow["164"]["inputs"]["width"] = 1024
-        prompts = prompts.replace("1024", "")
-
-    if ("*512" in prompts):
-        workflow["164"]["inputs"]["height"] = 512
-        prompts = prompts.replace("*512", "")
-    
-    if ("*768" in prompts):
-        workflow["164"]["inputs"]["height"] = 768
-        prompts = prompts.replace("*768", "")
-
-    if ("*1024" in prompts):
-        workflow["164"]["inputs"]["height"] = 1024
-        prompts = prompts.replace("*1024", "")
-
-    if TRANSLATE:
-        prompts = GoogleTranslator(source='auto', target='en').translate(text=prompts)
-    prompts = prompts + ",masterpiece, perfect, small details, highly detailed, best, high quality, professional photo"
-
-
-    workflow["97"]["inputs"]["text"] = prompts
-    workflow["98"]["inputs"]["text"] = NEGATIVE_PROMPT
+    workflow = setup_workflow(target_workflow, prompts)
 
     ws = websocket.WebSocket()
     ws.connect("ws://{}/ws?clientId={}".format(SERVER_ADDRESS, client_id))
@@ -171,7 +207,7 @@ def t2i(chat, prompts, target_workflow):
     for node_id in images:
         for image_data in images[node_id]:
             image = Image.open(io.BytesIO(image_data))
-            bot.send_photo(chat_id=chat.id, photo=image, caption=orig)
+            bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
             tmpn = "tmp/img_" + str(random.randint(0, 55555555555555)) + ".png"
             png = Image.open(io.BytesIO(image_data))
             png.save(tmpn)
@@ -189,51 +225,7 @@ def i2i(chat, prompts, target_workflow, photo):
     with open("img2img/" + fn, 'wb') as new_file:
         new_file.write(imgf)    
 
-    orig = prompts
-
-    workflow = target_workflow
-    workflow["1"]["inputs"]["ckpt_name"] = DEFAULT_MODEL 
-    workflow["22"]["inputs"]["vae_name"] = DEFAULT_VAE 
-    workflow["11"]["inputs"]["noise_seed"] = random.randint(1, 99999999999999)
-    workflow["6"]["inputs"]["image"] = "/zstorage/fast1/bots/comfybot/img2img/" + fn 
-
-    workflow["11"]["inputs"]["sampler_name"] = SAMPLER
-    workflow["11"]["inputs"]["steps"] = SAMPLER_STEPS
-
-    workflow["16"]["inputs"]["width"] = DEFAULT_WIDTH
-    workflow["16"]["inputs"]["height"] = DEFAULT_HEIGHT
-
-    if ("512*" in prompts):
-        workflow["16"]["inputs"]["width"] = 512
-        prompts = prompts.replace("512*", "*")
-
-    if ("768*" in prompts):
-        workflow["16"]["inputs"]["width"] = 768
-        prompts = prompts.replace("768*", "*")
-
-    if ("1024*" in prompts):
-        workflow["16"]["inputs"]["width"] = 1024
-        prompts = prompts.replace("1024*", "*")
-
-    if ("*512" in prompts):
-        workflow["16"]["inputs"]["height"] = 512
-        prompts = prompts.replace("*512", "")
-    
-    if ("*768" in prompts):
-        workflow["16"]["inputs"]["height"] = 768
-        prompts = prompts.replace("*768", "")
-
-    if ("*1024" in prompts):
-        workflow["16"]["inputs"]["height"] = 1024
-        prompts = prompts.replace("*1024", "")
-
-    if TRANSLATE:
-        prompts = GoogleTranslator(source='auto', target='en').translate(text=prompts)
-    prompts = prompts + ",masterpiece, perfect, small details, highly detailed, best, high quality, professional photo"
-
-
-    workflow["4"]["inputs"]["text"] = prompts
-    workflow["5"]["inputs"]["text"] = NEGATIVE_PROMPT
+    workflow = setup_workflow(target_workflow, prompts, os.getcwd() + "/img2img/" + fn)
 
     ws = websocket.WebSocket()
     ws.connect("ws://{}/ws?clientId={}".format(SERVER_ADDRESS, client_id))
@@ -242,7 +234,7 @@ def i2i(chat, prompts, target_workflow, photo):
     for node_id in images:
         for image_data in images[node_id]:
             image = Image.open(io.BytesIO(image_data))
-            bot.send_photo(chat_id=chat.id, photo=image, caption=orig)
+            bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
             tmpn = "tmp/img_" + str(random.randint(0, 55555555555555)) + ".png"
             png = Image.open(io.BytesIO(image_data))
             png.save(tmpn)
@@ -277,7 +269,16 @@ def message_reply(message):
 
 @bot.message_handler(content_types='photo')
 def message_reply(message):
-    i2i(message.chat, message.caption, wf_i2i, message.photo)
+    prompt = message.caption
+    wf = wf_i2i
+    if ('/face ' in prompt):
+        wf = wf_i2i_facefix_upscale
+        prompt = prompt.replace('/face ', '')
+    if ('/upscale ' in prompt):
+        wf = wf_i2i_upscale
+        prompt = prompt.replace('/upscale ', '')
+
+    i2i(message.chat, prompt, wf, message.photo)
 
 
 if __name__ == '__main__':

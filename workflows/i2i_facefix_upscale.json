@@ -1,19 +1,19 @@
 {
   "1": {
     "inputs": {
-      "ckpt_name": "revAnimatedFp16_122.safetensors"
+      "ckpt_name": "diffusers model"
     },
     "class_type": "CheckpointLoaderSimple"
   },
   "2": {
     "inputs": {
-      "vae_name": "vaeFtMse840000Ema_v10.safetensors"
+      "vae_name": "vae model"
     },
     "class_type": "VAELoader"
   },
   "4": {
     "inputs": {
-      "text": "girl",
+      "text": "positive prompt",
       "clip": [
         "1",
         1
@@ -23,7 +23,7 @@
   },
   "5": {
     "inputs": {
-      "text": "low quality, worst quality, embedding:badhandv4, blurred, deformed, embedding:EasyNegative,  embedding:badq    uality, watermark, text, font, signage, artist name, text, caption, jpeg artifacts",
+      "text": "negative prompt",
       "clip": [
         "1",
         1
@@ -33,7 +33,7 @@
   },
   "6": {
     "inputs": {
-      "image": "msg1878030077-48225.jpg",
+      "image": "source image",
       "choose file to upload": "image"
     },
     "class_type": "LoadImage"
@@ -93,7 +93,7 @@
   },
   "14": {
     "inputs": {
-      "control_net_name": "control_v11f1e_sd15_tile.pth"
+      "control_net_name": "controlnet model"
     },
     "class_type": "ControlNetLoader"
   },

@@ -34,13 +34,13 @@
   },
   "96": {
     "inputs": {
-      "vae_name": "vaeFtMse840000Ema_v10.safetensors"
+      "vae_name": "vae model"
     },
     "class_type": "VAELoader"
   },
   "97": {
     "inputs": {
-      "text": "photo of prompt",
+      "text": "positive prompt",
       "clip": [
         "163",
         1
@@ -50,7 +50,7 @@
   },
   "98": {
     "inputs": {
-      "text": "low quality, worst quality, embedding:badhandv4, blurred, deformed, embedding:EasyNegative,  embedding:badquality, watermark, text, font, signage, artist name, text, caption, jpeg artifacts",
+      "text": "negative prompt",
       "clip": [
         "163",
         1
@@ -70,7 +70,7 @@
   },
   "163": {
     "inputs": {
-      "ckpt_name": "revAnimated_v121Inp-inpainting.safetensors"
+      "ckpt_name": "diffusion model"
     },
     "class_type": "CheckpointLoaderSimple"
   },
