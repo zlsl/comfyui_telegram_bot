@@ -2,6 +2,7 @@
 
 import telebot
 import io
+import os
 import random
 from PIL import Image
 from deep_translator import GoogleTranslator
@@ -29,6 +30,13 @@ with open('config.yaml') as f:
     DEFAULT_HEIGHT = config['comfyui']['DEFAULT_HEIGHT']
     SAMPLER = config['comfyui']['SAMPLER']
     SAMPLER_STEPS = config['comfyui']['SAMPLER_STEPS']
+
+
+if not os.path.exists('tmp'):
+    os.makedirs('tmp')
+
+if not os.path.exists('img2img'):
+    os.makedirs('img2img')
 
 
 client_id = str(uuid.uuid4())
