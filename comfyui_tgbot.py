@@ -1,9 +1,19 @@
 #!/usr/bin/env python
 
-import telebot
+import logging
+import os, sys
+import coloredlogs
+
+log = logging.getLogger(__name__)
+coloredlogs.install(level=logging.DEBUG, logger=log, fmt='%(levelname)s %(message)s')
+
+if not os.path.exists('config.yaml'):
+    log.critical("No config.yaml file found!")
+    sys.exit(os.EX_CONFIG) 
+
 import re
 import io
-import os
+import telebot
 import random
 from PIL import Image
 from deep_translator import GoogleTranslator
@@ -17,7 +27,6 @@ import urllib.parse
 
 with open('config.yaml') as f:
     config = yaml.safe_load(f)
-    print(config)
     BOT_TOKEN = config['network']['BOT_TOKEN']
     SERVER_ADDRESS = config['network']['SERVER_ADDRESS']
 
@@ -38,13 +47,16 @@ with open('config.yaml') as f:
     SAMPLER = config['comfyui']['SAMPLER']
     SAMPLER_STEPS = config['comfyui']['SAMPLER_STEPS']
 
-
 if not os.path.exists('tmp'):
+    log.info("Creating tmp folder")
     os.makedirs('tmp')
 
 if not os.path.exists('img2img'):
+    log.info("Creating img2img folder")
     os.makedirs('img2img')
 
+if (config['whitelist'] is None): # Allow all, whitelist is empty
+    log.warning("Whitelist is empty, all users allowed to access this bot! Modify config.yaml")
 
 client_id = str(uuid.uuid4())
 
@@ -71,12 +83,15 @@ with open('workflows/t2i_upscale.json') as json_file:
 
 def check_access(id):
     if (config['whitelist'] is None): # Allow all, whitelist is empty
+        log.debug("Access allowed for %s, empty whitelist in config yaml", id)
         return True
 
     if (id in config['whitelist']):
+        log.debug("Access allowed for %s, user in whitelist", id)
         return True
 
     bot.send_message(chat_id=id, text=DENY_TEXT)
+    log.warning("Access denied for %s, user not in whitelist", id)
     return False
 
 
@@ -146,8 +161,6 @@ def setup_workflow(wf, prompt, source_image = ''):
         if ("model_name" in workflow[node]['inputs']):
             if (workflow[node]['class_type'] == 'UpscaleModelLoader'):
                workflow[node]['inputs']['model_name'] = DEFAULT_UPSCALER
-
-    print(json.dumps(workflow, indent=2))
 
     return workflow
 
@@ -256,24 +269,25 @@ def start_message(message):
 
 @bot.message_handler(commands=['face'])
 def start_message(message):
-    print(message.chat)
+    log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
     t2i(message.chat, message.text.replace("/face", ""), wf_t2i_facefix_upscale)
 
 
 @bot.message_handler(commands=['upscale'])
 def start_message(message):
-    print(message.chat)
+    log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
     t2i(message.chat, message.text.replace("/upscale", ""), wf_t2i_upscale)
 
 
 @bot.message_handler(content_types='text')
 def message_reply(message):
-    print('>', message.chat, message.text)
+    log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
     t2i(message.chat, message.text, wf_t2i)
 
 
 @bot.message_handler(content_types='photo')
 def message_reply(message):
+    log.info("I2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.caption)
     prompt = message.caption
     wf = wf_i2i
     if ('/face ' in prompt):
@@ -285,6 +299,8 @@ def message_reply(message):
 
     i2i(message.chat, prompt, wf, message.photo)
 
+
+log.info("Starting bot")
 
 if __name__ == '__main__':
     bot.infinity_polling()
