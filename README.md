@@ -14,7 +14,7 @@
 ControlNet модель: *control_v11f1e_sd15_tile.pth*
 
 Переименовать файл config.yaml.samlpe в config.yaml и настроить под себя:
-
+```
 network:
   BOT_TOKEN: 'xxx:xxxxxx' - токен telegram бота
   SERVER_ADDRESS: "127.0.0.1:8188" - адрес API ComfyUI
@@ -36,6 +36,7 @@ comfyui:
   DEFAULT_WIDTH: 512
   DEFAULT_HEIGHT: 512
   NEGATIVE_PROMPT: 'low quality, worst quality, embedding:badhandv4, blurred, deformed, embedding:EasyNegative, embedding:badquality, watermark, text, font, signage, artist name, text, caption, jpeg artifacts' - настройте под свои нужды негативный промпт
+```
 
 ## Описание работы
 
@@ -49,7 +50,7 @@ comfyui:
 
 Исходная картинка | Результат
 --- | ---
-![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_src.jpg) | ![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_result.jpg) Милый демон с белой змеиной чешуёй, изумрудные глаза, острые когти 1024*1024
+![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_src.jpg) | ![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_result.jpg) Милый демон с белой змеиной чешуёй, изумрудные глаза, острые когти 1024\*1024
 
 
 В каталоге img2img сохраняются картинки отправленные боту
