@@ -47,6 +47,7 @@ with open('config.yaml') as f:
     DEFAULT_HEIGHT = config['comfyui']['DEFAULT_HEIGHT']
     MAX_WIDTH = config['comfyui']['MAX_WIDTH']
     MAX_HEIGHT = config['comfyui']['MAX_HEIGHT']
+    SCHEDULER = config['comfyui']['SCHEDULER']
     SAMPLER = config['comfyui']['SAMPLER']
     SAMPLER_STEPS = config['comfyui']['SAMPLER_STEPS']
 
@@ -152,6 +153,9 @@ def setup_workflow(wf, prompt, source_image = ''):
 
         if ("sampler_name" in workflow[node]['inputs']):
             workflow[node]['inputs']['sampler_name'] = SAMPLER
+
+        if ("scheduler" in workflow[node]['inputs']):
+            workflow[node]['inputs']['scheduler'] = SCHEDULER
 
         if ("steps" in workflow[node]['inputs']):
             workflow[node]['inputs']['steps'] = SAMPLER_STEPS

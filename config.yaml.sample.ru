@@ -24,6 +24,7 @@ comfyui:
   DEFAULT_CONTROLNET: 'control_v11f1e_sd15_tile.pth'
   DEFAULT_VAE: 'vaeFtMse840000Ema_v10.safetensors'
   DEFAULT_UPSCALER: '4xNMKDSuperscale_4xNMKDSuperscale.pt'
+  SCHEDULER: 'karras'                 
   SAMPLER: 'uni_pc'
   SAMPLER_STEPS: 30
   DEFAULT_WIDTH: 512
