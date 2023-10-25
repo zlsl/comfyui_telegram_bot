@@ -4,8 +4,10 @@ import logging
 import os, sys
 import coloredlogs
 
-log = logging.getLogger(__name__)
-coloredlogs.install(level=logging.DEBUG, logger=log, fmt='%(levelname)s %(message)s')
+logging.basicConfig(filename='bot.log', encoding='utf-8')
+
+log = logging.getLogger()
+coloredlogs.install(level=logging.INFO, logger=log, fmt='%(levelname)s %(message)s')
 
 if not os.path.exists('config.yaml'):
     log.critical("No config.yaml file found!")
@@ -84,11 +86,11 @@ with open('workflows/t2i_upscale.json') as json_file:
 
 def check_access(id):
     if (config['whitelist'] is None): # Allow all, whitelist is empty
-        log.debug("Access allowed for %s, empty whitelist in config yaml", id)
+        log.info("Access allowed for %s, empty whitelist in config yaml", id)
         return True
 
     if (id in config['whitelist']):
-        log.debug("Access allowed for %s, user in whitelist", id)
+        log.info("Access allowed for %s, user in whitelist", id)
         return True
 
     bot.send_message(chat_id=id, text=DENY_TEXT)
