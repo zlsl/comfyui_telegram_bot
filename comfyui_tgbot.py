@@ -104,7 +104,14 @@ def setup_workflow(wf, prompt, source_image = ''):
 
     if TRANSLATE:
         prompt = GoogleTranslator(source='auto', target='en').translate(text=prompt)
-    prompt = prompt + BEAUTIFY_PROMPT
+
+    if ('|' in prompt): #got negative prompt part
+        ps = prompt.split('|')
+        prompt = ps[0].strip() + BEAUTIFY_PROMPT
+        negative_prompt = ps[1].strip()
+    else:
+        prompt = prompt + BEAUTIFY_PROMPT
+        negative_prompt = NEGATIVE_PROMPT
 
     sizes = re.findall('\d+x\d+', prompt)
     if sizes:
@@ -155,7 +162,7 @@ def setup_workflow(wf, prompt, source_image = ''):
 
         if ("text" in workflow[node]['inputs']):
             if (workflow[node]['inputs']['text'] == 'negative prompt'):
-               workflow[node]['inputs']['text'] = NEGATIVE_PROMPT
+               workflow[node]['inputs']['text'] = negative_prompt
 
         if ("image" in workflow[node]['inputs']):
             if (workflow[node]['inputs']['image'] == 'source image'):

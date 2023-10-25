@@ -5,12 +5,19 @@ network:
 bot:
   TRANSLATE: True
   DENY_TEXT: "Access denied"
-  HELP_TEXT: "Для генерации можно использовать текст на русском языке
-По-умолчанию каритнка создаётся в разрешении 512x512 пикселей
-В промпте можно указать размер ШИРИНАxВЫСОТА. Например - 1024x512
-Команды:
-/upscale .... - создаст картинку высокого разрешения
-/face .... - исправит дефекты лиц"
+  HELP_TEXT: "You can use text in any language to generate
+
+By default, the image is created in a resolution of 512x512 pixels
+
+In the prompt you can specify the size WIDTHxHEIGHT. For example - 1024x512
+
+To add a negative prompt, add it to the end of the message using the '|' separator.
+
+Teams:
+
+/upscale .... - creates a high-resolution image
+
+/face .... - corrects facial defects"
 
 comfyui:
   DEFAULT_MODEL: 'revAnimatedFp16_122.safetensors'
