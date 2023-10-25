@@ -23,7 +23,7 @@ bot:
   TRANSLATE: True - Переводить ли языки промпта на английский (через deep_translate)
   HELP_TEXT: "Для генерации можно использовать текст на русском языке
 По-умолчанию каритнка создаётся в разрешении 512x512 пикселей
-В промпте можно указать размер ШИРИНА*ВЫСОТА, допустимые значения: 512, 768, 1024. Например - 1024*512
+В промпте можно указать размер ШИРИНА\*ВЫСОТА, допустимые значения: 512, 768, 1024. Например - 1024\*512
 Команды:
 /upscale .... - создаст картинку высокого разрешения
 /face .... - исправит дефекты лиц"
@@ -49,7 +49,7 @@ comfyui:
 
 Исходная картинка | Результат
 --- | ---
-![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_src.jpg) | ![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_result.jpg) Милый демон с белой змеиной чешуёй, изумрудные глаза, острые когти 1024*1024
+![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_src.jpg) | ![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_result.jpg) Милый демон с белой змеиной чешуёй, изумрудные глаза, острые когти 1024\*1024
 
 
 В каталоге img2img сохраняются картинки отправленные боту
