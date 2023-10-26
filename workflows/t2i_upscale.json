@@ -1,104 +1,131 @@
 {
-  "48": {
+  "5": {
     "inputs": {
-      "seed": 1013682419639747,
-      "steps": 30,
-      "cfg": 7.5,
-      "sampler_name": "uni_pc",
-      "scheduler": "karras",
-      "denoise": 1,
-      "preview_method": "none",
-      "vae_decode": "true",
+      "ratio": 0.6,
       "model": [
-        "163",
-        0
-      ],
-      "positive": [
-        "97",
-        0
-      ],
-      "negative": [
-        "98",
-        0
-      ],
-      "latent_image": [
-        "164",
-        0
-      ],
-      "optional_vae": [
-        "96",
+        "26",
         0
       ]
     },
-    "class_type": "KSampler (Efficient)"
+    "class_type": "TomePatchModel"
   },
-  "96": {
-    "inputs": {
-      "vae_name": "vae model"
-    },
-    "class_type": "VAELoader"
-  },
-  "97": {
-    "inputs": {
-      "text": "positive prompt",
-      "clip": [
-        "163",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode"
-  },
-  "98": {
+  "6": {
     "inputs": {
       "text": "negative prompt",
       "clip": [
-        "163",
-        1
+        "15",
+        0
       ]
     },
     "class_type": "CLIPTextEncode"
   },
-  "138": {
+  "7": {
     "inputs": {
-      "filename_prefix": "bot",
-      "images": [
-        "144",
+      "text": "positive prompt",
+      "clip": [
+        "15",
         0
       ]
     },
-    "class_type": "SaveImage"
+    "class_type": "CLIPTextEncode"
   },
-  "143": {
-    "inputs": {
-      "model_name": "4xNMKDSuperscale_4xNMKDSuperscale.pt"
-    },
-    "class_type": "UpscaleModelLoader"
-  },
-  "144": {
-    "inputs": {
-      "upscale_model": [
-        "143",
-        0
-      ],
-      "image": [
-        "48",
-        5
-      ]
-    },
-    "class_type": "ImageUpscaleWithModel"
-  },
-  "163": {
-    "inputs": {
-      "ckpt_name": "diffusion model"
-    },
-    "class_type": "CheckpointLoaderSimple"
-  },
-  "164": {
+  "9": {
     "inputs": {
       "width": 512,
       "height": 512,
       "batch_size": 1
     },
     "class_type": "EmptyLatentImage"
+  },
+  "13": {
+    "inputs": {
+      "seed": 338624764032985,
+      "steps": 35,
+      "cfg": 7,
+      "sampler_name": "ddim",
+      "scheduler": "karras",
+      "denoise": 1,
+      "model": [
+        "5",
+        0
+      ],
+      "positive": [
+        "7",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "KSampler"
+  },
+  "14": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "VAEDecode"
+  },
+  "15": {
+    "inputs": {
+      "stop_at_clip_layer": -1,
+      "clip": [
+        "26",
+        1
+      ]
+    },
+    "class_type": "CLIPSetLastLayer"
+  },
+  "16": {
+    "inputs": {
+      "vae_name": "vaeFtMse840000Ema_v10.safetensors"
+    },
+    "class_type": "VAELoader"
+  },
+  "21": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "SaveImage"
+  },
+  "22": {
+    "inputs": {
+      "model_name": "003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x2_GAN-with-dict-keys-params-and-params_ema.pth"
+    },
+    "class_type": "UpscaleModelLoader"
+  },
+  "23": {
+    "inputs": {
+      "upscale_model": [
+        "22",
+        0
+      ],
+      "image": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel"
+  },
+  "26": {
+    "inputs": {
+      "ckpt_name": "realcartoonRealistic_v8.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
   }
 }

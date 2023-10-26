@@ -1,126 +1,149 @@
 {
-  "1": {
-    "inputs": {
-      "ckpt_name": "diffusion model"
-    },
-    "class_type": "CheckpointLoaderSimple"
-  },
-  "2": {
-    "inputs": {
-      "vae_name": "vae model"
-    },
-    "class_type": "VAELoader"
-  },
-  "4": {
-    "inputs": {
-      "text": "positive prompt",
-      "clip": [
-        "1",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode"
-  },
   "5": {
     "inputs": {
-      "text": "negative prompt",
-      "clip": [
-        "1",
-        1
+      "ratio": 0.6,
+      "model": [
+        "26",
+        0
       ]
     },
-    "class_type": "CLIPTextEncode"
+    "class_type": "TomePatchModel"
   },
   "6": {
     "inputs": {
-      "image": "source image",
-      "choose file to upload": "image"
-    },
-    "class_type": "LoadImage"
-  },
-  "11": {
-    "inputs": {
-      "add_noise": "enable",
-      "noise_seed": 293914676413572,
-      "steps": 30,
-      "cfg": 8,
-      "sampler_name": "uni_pc",
-      "scheduler": "normal",
-      "start_at_step": 0,
-      "end_at_step": 10000,
-      "return_with_leftover_noise": "disable",
-      "model": [
-        "1",
-        0
-      ],
-      "positive": [
+      "text": "negative prompt",
+      "clip": [
         "15",
         0
-      ],
-      "negative": [
-        "5",
-        0
-      ],
-      "latent_image": [
-        "16",
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "7": {
+    "inputs": {
+      "text": "positive prompt",
+      "clip": [
+        "15",
         0
       ]
     },
-    "class_type": "KSamplerAdvanced"
+    "class_type": "CLIPTextEncode"
   },
-  "12": {
-    "inputs": {
-      "samples": [
-        "11",
-        0
-      ],
-      "vae": [
-        "2",
-        0
-      ]
-    },
-    "class_type": "VAEDecode"
-  },
-  "13": {
-    "inputs": {
-      "filename_prefix": "ComfyUI",
-      "images": [
-        "12",
-        0
-      ]
-    },
-    "class_type": "SaveImage"
-  },
-  "14": {
-    "inputs": {
-      "control_net_name": "control_v11f1e_sd15_tile.pth"
-    },
-    "class_type": "ControlNetLoader"
-  },
-  "15": {
-    "inputs": {
-      "strength": 1,
-      "conditioning": [
-        "4",
-        0
-      ],
-      "control_net": [
-        "14",
-        0
-      ],
-      "image": [
-        "6",
-        0
-      ]
-    },
-    "class_type": "ControlNetApply"
-  },
-  "16": {
+  "9": {
     "inputs": {
       "width": 512,
       "height": 512,
       "batch_size": 1
     },
     "class_type": "EmptyLatentImage"
+  },
+  "13": {
+    "inputs": {
+      "seed": 813370121901727,
+      "steps": 35,
+      "cfg": 7,
+      "sampler_name": "ddim",
+      "scheduler": "karras",
+      "denoise": 1,
+      "model": [
+        "5",
+        0
+      ],
+      "positive": [
+        "29",
+        0
+      ],
+      "negative": [
+        "29",
+        1
+      ],
+      "latent_image": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "KSampler"
+  },
+  "14": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "VAEDecode"
+  },
+  "15": {
+    "inputs": {
+      "stop_at_clip_layer": -1,
+      "clip": [
+        "26",
+        1
+      ]
+    },
+    "class_type": "CLIPSetLastLayer"
+  },
+  "16": {
+    "inputs": {
+      "vae_name": "vaeFtMse840000Ema_v10.safetensors"
+    },
+    "class_type": "VAELoader"
+  },
+  "21": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "SaveImage"
+  },
+  "26": {
+    "inputs": {
+      "ckpt_name": "realcartoonRealistic_v8.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  },
+  "27": {
+    "inputs": {
+      "control_net_name": "control_v11f1e_sd15_tile.pth"
+    },
+    "class_type": "ControlNetLoader"
+  },
+  "29": {
+    "inputs": {
+      "strength": 1,
+      "start_percent": 0,
+      "end_percent": 1,
+      "positive": [
+        "7",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "control_net": [
+        "27",
+        0
+      ],
+      "image": [
+        "30",
+        0
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced"
+  },
+  "30": {
+    "inputs": {
+      "image": "source image",
+      "choose file to upload": "image"
+    },
+    "class_type": "LoadImage"
   }
 }

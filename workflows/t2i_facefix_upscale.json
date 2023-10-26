@@ -1,109 +1,115 @@
 {
-  "48": {
+  "5": {
     "inputs": {
-      "seed": 1013682419639747,
-      "steps": 30,
-      "cfg": 7.5,
-      "sampler_name": "uni_pc",
-      "scheduler": "karras",
-      "denoise": 1,
-      "preview_method": "none",
-      "vae_decode": "true",
+      "ratio": 0.6,
       "model": [
-        "163",
-        0
-      ],
-      "positive": [
-        "97",
-        0
-      ],
-      "negative": [
-        "98",
-        0
-      ],
-      "latent_image": [
-        "164",
-        0
-      ],
-      "optional_vae": [
-        "96",
+        "26",
         0
       ]
     },
-    "class_type": "KSampler (Efficient)"
+    "class_type": "TomePatchModel"
   },
-  "96": {
+  "6": {
+    "inputs": {
+      "text": "negative prompt",
+      "clip": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "7": {
+    "inputs": {
+      "text": "positive prompt",
+      "clip": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "9": {
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage"
+  },
+  "13": {
+    "inputs": {
+      "seed": 181674372412358,
+      "steps": 35,
+      "cfg": 7,
+      "sampler_name": "ddim",
+      "scheduler": "karras",
+      "denoise": 1,
+      "model": [
+        "5",
+        0
+      ],
+      "positive": [
+        "7",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "KSampler"
+  },
+  "14": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "VAEDecode"
+  },
+  "15": {
+    "inputs": {
+      "stop_at_clip_layer": -1,
+      "clip": [
+        "26",
+        1
+      ]
+    },
+    "class_type": "CLIPSetLastLayer"
+  },
+  "16": {
     "inputs": {
       "vae_name": "vae model"
     },
     "class_type": "VAELoader"
   },
-  "97": {
+  "17": {
     "inputs": {
-      "text": "positive prompt",
-      "clip": [
-        "163",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode"
-  },
-  "98": {
-    "inputs": {
-      "text": "negative prompt",
-      "clip": [
-        "163",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode"
-  },
-  "138": {
-    "inputs": {
-      "filename_prefix": "bot",
-      "images": [
-        "144",
-        0
-      ]
-    },
-    "class_type": "SaveImage"
-  },
-  "143": {
-    "inputs": {
-      "model_name": "4xNMKDSuperscale_4xNMKDSuperscale.pt"
-    },
-    "class_type": "UpscaleModelLoader"
-  },
-  "144": {
-    "inputs": {
-      "upscale_model": [
-        "143",
-        0
-      ],
-      "image": [
-        "146",
-        0
-      ]
-    },
-    "class_type": "ImageUpscaleWithModel"
-  },
-  "146": {
-    "inputs": {
-      "guide_size": 256,
+      "guide_size": 512,
       "guide_size_for": true,
-      "max_size": 384,
-      "seed": 431301029723223,
-      "steps": 20,
-      "cfg": 8.5,
-      "sampler_name": "dpmpp_2m_sde",
-      "scheduler": "normal",
-      "denoise": 0.37,
+      "max_size": 768,
+      "seed": 549868032759476,
+      "steps": 35,
+      "cfg": 8,
+      "sampler_name": "ddim",
+      "scheduler": "karras",
+      "denoise": 0.5,
       "feather": 5,
       "noise_mask": true,
       "force_inpaint": true,
-      "bbox_threshold": 0.5,
+      "bbox_threshold": 0.2,
       "bbox_dilation": 10,
-      "bbox_crop_factor": 3,
+      "bbox_crop_factor": 1.6,
       "sam_detection_hint": "center-1",
       "sam_dilation": 0,
       "sam_threshold": 0.93,
@@ -113,77 +119,75 @@
       "drop_size": 10,
       "wildcard": "",
       "image": [
-        "48",
-        5
+        "23",
+        0
       ],
       "model": [
-        "163",
+        "5",
         0
       ],
       "clip": [
-        "163",
-        1
+        "15",
+        0
       ],
       "vae": [
-        "96",
+        "16",
         0
       ],
       "positive": [
-        "160",
+        "7",
         0
       ],
       "negative": [
-        "98",
+        "6",
         0
       ],
       "bbox_detector": [
-        "154",
+        "20",
         0
       ]
     },
     "class_type": "FaceDetailer"
   },
-  "154": {
+  "20": {
     "inputs": {
       "model_name": "bbox/face_yolov8m.pt"
     },
     "class_type": "UltralyticsDetectorProvider"
   },
-  "156": {
+  "21": {
     "inputs": {
-      "text": "perfect face, detailed eyes, detailed lips, ideal face",
-      "clip": [
-        "163",
-        1
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "17",
+        0
       ]
     },
-    "class_type": "CLIPTextEncode"
+    "class_type": "SaveImage"
   },
-  "160": {
+  "22": {
     "inputs": {
-      "conditioning_1": [
-        "97",
+      "model_name": "003_realSR_BSRGAN_DFO_s64w8_SwinIR-M_x2_GAN-with-dict-keys-params-and-params_ema.pth"
+    },
+    "class_type": "UpscaleModelLoader"
+  },
+  "23": {
+    "inputs": {
+      "upscale_model": [
+        "22",
         0
       ],
-      "conditioning_2": [
-        "156",
+      "image": [
+        "14",
         0
       ]
     },
-    "class_type": "ConditioningCombine"
+    "class_type": "ImageUpscaleWithModel"
   },
-  "163": {
+  "26": {
     "inputs": {
-      "ckpt_name": "diffusion model"
+      "ckpt_name": "diffusers model"
     },
     "class_type": "CheckpointLoaderSimple"
-  },
-  "164": {
-    "inputs": {
-      "width": 512,
-      "height": 512,
-      "batch_size": 1
-    },
-    "class_type": "EmptyLatentImage"
   }
 }

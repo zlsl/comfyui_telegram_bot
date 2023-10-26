@@ -27,6 +27,9 @@ comfyui:
   SCHEDULER: 'karras'                 
   SAMPLER: 'uni_pc'
   SAMPLER_STEPS: 30
+  TOKEN_MERGE_RATIO: '0.6'
+  CLIP_SKIP: '-1'
+  CONTROLNET_STRENGTH: '1.0'
   DEFAULT_WIDTH: 512
   DEFAULT_HEIGHT: 512
   MAX_WIDTH: 2048      

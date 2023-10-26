@@ -41,6 +41,7 @@ with open('config.yaml') as f:
     DEFAULT_MODEL = config['comfyui']['DEFAULT_MODEL']
     DEFAULT_VAE = config['comfyui']['DEFAULT_VAE']
     DEFAULT_CONTROLNET = config['comfyui']['DEFAULT_CONTROLNET']
+    CONTROLNET_STRENGTH = config['comfyui']['CONTROLNET_STRENGTH']
     DEFAULT_UPSCALER = config['comfyui']['DEFAULT_UPSCALER']
     NEGATIVE_PROMPT = config['comfyui']['NEGATIVE_PROMPT']
     BEAUTIFY_PROMPT = config['comfyui']['BEAUTIFY_PROMPT']
@@ -51,6 +52,8 @@ with open('config.yaml') as f:
     SCHEDULER = config['comfyui']['SCHEDULER']
     SAMPLER = config['comfyui']['SAMPLER']
     SAMPLER_STEPS = config['comfyui']['SAMPLER_STEPS']
+    TOKEN_MERGE_RATIO = config['comfyui']['TOKEN_MERGE_RATIO']
+    CLIP_SKIP = config['comfyui']['CLIP_SKIP']
 
 if not os.path.exists('tmp'):
     log.info("Creating tmp folder")
@@ -139,6 +142,7 @@ def setup_workflow(wf, prompt, source_image = ''):
 
         if ("control_net_name" in workflow[node]['inputs']):
             workflow[node]['inputs']['control_net_name'] = DEFAULT_CONTROLNET
+            workflow[node]['inputs']['strength'] = CONTROLNET_STRENGTH
 
         if ("width" in workflow[node]['inputs']):
             workflow[node]['inputs']['width'] = width
@@ -161,6 +165,9 @@ def setup_workflow(wf, prompt, source_image = ''):
         if ("steps" in workflow[node]['inputs']):
             workflow[node]['inputs']['steps'] = SAMPLER_STEPS
 
+        if ("stop_at_clip_layer" in workflow[node]['inputs']):
+            workflow[node]['inputs']['stop_at_clip_layer'] = CLIP_SKIP
+
         if ("text" in workflow[node]['inputs']):
             if (workflow[node]['inputs']['text'] == 'positive prompt'):
                workflow[node]['inputs']['text'] = prompt
@@ -176,6 +183,10 @@ def setup_workflow(wf, prompt, source_image = ''):
         if ("model_name" in workflow[node]['inputs']):
             if (workflow[node]['class_type'] == 'UpscaleModelLoader'):
                workflow[node]['inputs']['model_name'] = DEFAULT_UPSCALER
+        
+        if ("ratio" in workflow[node]['inputs']):
+            if (workflow[node]['class_type'] == 'TomePatchModel'):
+               workflow[node]['inputs']['ratio'] = TOKEN_MERGE_RATIO
 
     return workflow
 
@@ -240,7 +251,10 @@ def t2i(chat, prompts, target_workflow):
     for node_id in images:
         for image_data in images[node_id]:
             image = Image.open(io.BytesIO(image_data))
-            bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
+            try:
+                bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
+            except:
+                log.error("Error sending photo")
             tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts) + "_" + str(random.randint(0, 55555555555555)) + ".png"
             png = Image.open(io.BytesIO(image_data))
             png.save(tmpn)
@@ -267,7 +281,10 @@ def i2i(chat, prompts, target_workflow, photo):
     for node_id in images:
         for image_data in images[node_id]:
             image = Image.open(io.BytesIO(image_data))
-            bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
+            try:
+                bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
+            except:
+                log.error("Error sending photo")
             tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts) + "_" + str(random.randint(0, 55555555555555)) + ".png"
             png = Image.open(io.BytesIO(image_data))
             png.save(tmpn)
