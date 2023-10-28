@@ -13,10 +13,13 @@ if not os.path.exists('config.yaml'):
     log.critical("No config.yaml file found!")
     sys.exit(os.EX_CONFIG) 
 
+import time
 import copy
 import re
 import io
+import asyncio
 import telebot
+from telebot.async_telebot import AsyncTeleBot
 import random
 from PIL import Image
 from deep_translator import GoogleTranslator
@@ -68,7 +71,7 @@ if (config['whitelist'] is None): # Allow all, whitelist is empty
 
 client_id = str(uuid.uuid4())
 
-bot = telebot.TeleBot(BOT_TOKEN)
+bot = AsyncTeleBot(BOT_TOKEN)
 
 with open('workflows/i2i.json') as json_file:
     wf_i2i = json.load(json_file)
@@ -89,7 +92,7 @@ with open('workflows/t2i_upscale.json') as json_file:
     wf_t2i_upscale = json.load(json_file)
 
 
-def check_access(id):
+async def check_access(id):
     if (config['whitelist'] is None): # Allow all, whitelist is empty
         log.info("Access allowed for %s, empty whitelist in config yaml", id)
         return True
@@ -98,7 +101,7 @@ def check_access(id):
         log.info("Access allowed for %s, user in whitelist", id)
         return True
 
-    bot.send_message(chat_id=id, text=DENY_TEXT)
+    await bot.send_message(chat_id=id, text=DENY_TEXT)
     log.warning("Access denied for %s, user not in whitelist", id)
     return False
 
@@ -238,8 +241,8 @@ def get_images(ws, prompt):
     return output_images
 
 
-def t2i(chat, prompts, target_workflow):
-    if not check_access(chat.id):
+async def t2i(chat, prompts, target_workflow):
+    if not await check_access(chat.id):
         return
 
     workflow = setup_workflow(target_workflow, prompts)
@@ -252,22 +255,24 @@ def t2i(chat, prompts, target_workflow):
         for image_data in images[node_id]:
             image = Image.open(io.BytesIO(image_data))
             try:
-                bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
+                await bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
             except:
                 log.error("Error sending photo")
             tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts) + "_" + str(random.randint(0, 55555555555555)) + ".png"
             png = Image.open(io.BytesIO(image_data))
             png.save(tmpn)
             pd = open(tmpn, 'rb')
-            bot.send_document(chat_id=chat.id, document=pd)
+            await bot.send_document(chat_id=chat.id, document=pd)
 
 
-def i2i(chat, prompts, target_workflow, photo):
-    if not check_access(chat.id):
+async def i2i(chat, prompts, target_workflow, photo):
+    if not await check_access(chat.id):
         return
 
-    imf = bot.get_file(photo[len(photo)-1].file_id)
-    imgf = bot.download_file(imf.file_path)
+    img_id = photo[len(photo)-1].file_id
+    tmp = (await bot.get_file(img_id))
+    imgf = (await bot.download_file(tmp.file_path))
+
     fn = "source_" + str(chat.id) + "_" + str(random.randint(0, 6666666666666)) + ".png"
     with open("img2img/" + fn, 'wb') as new_file:
         new_file.write(imgf)    
@@ -282,43 +287,43 @@ def i2i(chat, prompts, target_workflow, photo):
         for image_data in images[node_id]:
             image = Image.open(io.BytesIO(image_data))
             try:
-                bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
+                await bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
             except:
                 log.error("Error sending photo")
             tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts) + "_" + str(random.randint(0, 55555555555555)) + ".png"
             png = Image.open(io.BytesIO(image_data))
             png.save(tmpn)
             pd = open(tmpn, 'rb')
-            bot.send_document(chat_id=chat.id, document=pd)
+            await bot.send_document(chat_id=chat.id, document=pd)
 
 
 @bot.message_handler(commands=['help'])
 @bot.message_handler(commands=['start'])
-def start_message(message):
+async def start_message(message):
     print(message.chat)
-    bot.send_message(chat_id=message.chat.id, text=HELP_TEXT)
+    await bot.send_message(chat_id=message.chat.id, text=HELP_TEXT)
 
 
 @bot.message_handler(commands=['face'])
-def start_message(message):
+async def start_message(message):
     log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
-    t2i(message.chat, message.text.replace("/face", ""), wf_t2i_facefix_upscale)
+    await t2i(message.chat, message.text.replace("/face", ""), wf_t2i_facefix_upscale)
 
 
 @bot.message_handler(commands=['upscale'])
-def start_message(message):
+async def start_message(message):
     log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
-    t2i(message.chat, message.text.replace("/upscale", ""), wf_t2i_upscale)
+    await t2i(message.chat, message.text.replace("/upscale", ""), wf_t2i_upscale)
 
 
 @bot.message_handler(content_types='text')
-def message_reply(message):
+async def message_reply(message):
     log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
-    t2i(message.chat, message.text, wf_t2i)
+    await t2i(message.chat, message.text, wf_t2i)
 
 
 @bot.message_handler(content_types='photo')
-def message_reply(message):
+async def message_reply(message):
     log.info("I2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.caption)
     prompt = message.caption
     wf = wf_i2i
@@ -329,10 +334,10 @@ def message_reply(message):
         wf = wf_i2i_upscale
         prompt = prompt.replace('/upscale ', '')
 
-    i2i(message.chat, prompt, wf, message.photo)
+    await i2i(message.chat, prompt, wf, message.photo)
 
 
 log.info("Starting bot")
 
 if __name__ == '__main__':
-    bot.infinity_polling()
+    asyncio.run(bot.infinity_polling())
