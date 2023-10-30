@@ -258,7 +258,7 @@ async def t2i(chat, prompts, target_workflow):
                 await bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
             except:
                 log.error("Error sending photo")
-            tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts) + "_" + str(random.randint(0, 55555555555555)) + ".png"
+            tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts[0:100]) + "_" + str(random.randint(0, 55555555555555)) + ".png"
             png = Image.open(io.BytesIO(image_data))
             png.save(tmpn)
             pd = open(tmpn, 'rb')
@@ -290,7 +290,7 @@ async def i2i(chat, prompts, target_workflow, photo):
                 await bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
             except:
                 log.error("Error sending photo")
-            tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts) + "_" + str(random.randint(0, 55555555555555)) + ".png"
+            tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts[0:100]) + "_" + str(random.randint(0, 55555555555555)) + ".png"
             png = Image.open(io.BytesIO(image_data))
             png.save(tmpn)
             pd = open(tmpn, 'rb')
