@@ -27,6 +27,7 @@ comfyui:
   SCHEDULER: 'karras'                 
   SAMPLER: 'uni_pc'
   SAMPLER_STEPS: 30
+  MAX_STEPS: 100
   TOKEN_MERGE_RATIO: '0.6'
   CLIP_SKIP: '-1'
   CONTROLNET_STRENGTH: '1.0'
@@ -44,4 +45,6 @@ loras:
   - 'jh|jamie_hewlett_style.safetensors|1|jamie hewlett style'
   - 'minecraft|minecraft_square_style_v2-10.safetensors|1|minecraft square style'
   - 'giardino|Giardino_Style-13.safetensors|1|giardino style illustration'
-
+  - 'akashiba|aka_shiba_offset.safetensors|1|'
+  - 'alien|alien_lora.safetensors|0.5|alien, professional photo'
+  - 'c4t|c4tt4stic6(1).safetensors|0.9|c4tt4stic cat'

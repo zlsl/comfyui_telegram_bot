@@ -55,6 +55,7 @@ with open('config.yaml') as f:
     SCHEDULER = config['comfyui']['SCHEDULER']
     SAMPLER = config['comfyui']['SAMPLER']
     SAMPLER_STEPS = config['comfyui']['SAMPLER_STEPS']
+    MAX_STEPS = config['comfyui']['MAX_STEPS']
     TOKEN_MERGE_RATIO = config['comfyui']['TOKEN_MERGE_RATIO']
     CLIP_SKIP = config['comfyui']['CLIP_SKIP']
     ALLOW_DIRECT_LORA = config['comfyui']['ALLOW_DIRECT_LORA']
@@ -199,6 +200,24 @@ def setup_workflow(wf, prompt, source_image = '', lora = None):
         if (height > MAX_HEIGHT):
             width = MAX_HEIGHT
 
+    steps = re.findall('\\%\\d+', prompt)
+    if steps:
+        prompt = prompt.replace(steps[0], '')
+        steps = int(steps[0].replace('%', ''))
+        if (steps > MAX_STEPS):
+            steps = MAX_STEPS
+    else:
+        steps = SAMPLER_STEPS
+
+    cn_strength = re.findall('\\$\\d*.?\\d*\\s', prompt)
+    if cn_strength:
+        prompt = prompt.replace(cn_strength[0], '')
+        cn_strength = cn_strength[0].replace('$', '').replace(' ', '')
+        if ("." not in cn_strength):
+            cn_strength = cn_strength + '.0'
+    else:
+        cn_strength = CONTROLNET_STRENGTH
+
     for node in workflow:
         if ("ckpt_name" in workflow[node]['inputs']):
             workflow[node]['inputs']['ckpt_name'] = DEFAULT_MODEL
@@ -211,7 +230,7 @@ def setup_workflow(wf, prompt, source_image = '', lora = None):
 
         if ("strength" in workflow[node]['inputs']):
             if (workflow[node]['class_type'] == 'ControlNetApply'):
-               workflow[node]['inputs']['strength'] = CONTROLNET_STRENGTH
+               workflow[node]['inputs']['strength'] = cn_strength
 
         if ("width" in workflow[node]['inputs']):
             workflow[node]['inputs']['width'] = width
@@ -232,7 +251,7 @@ def setup_workflow(wf, prompt, source_image = '', lora = None):
             workflow[node]['inputs']['scheduler'] = SCHEDULER
 
         if ("steps" in workflow[node]['inputs']):
-            workflow[node]['inputs']['steps'] = SAMPLER_STEPS
+            workflow[node]['inputs']['steps'] = steps
 
         if ("stop_at_clip_layer" in workflow[node]['inputs']):
             workflow[node]['inputs']['stop_at_clip_layer'] = CLIP_SKIP
