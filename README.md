@@ -1,5 +1,11 @@
 # ComfyUI telegram bot
 
+## Telegram-бот для интеграции ComfyUI
+
+Работают text2image, image2image. Есть поддержка LoRA
+
+Бот для теста: @stablecats_bot
+
 ## Установка и настройка
 
 Необходима рабочая установка ComfyUI с дополнительными модулями:
