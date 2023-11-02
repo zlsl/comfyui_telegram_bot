@@ -61,6 +61,13 @@ comfyui:
 
 Для добавления своего негативного промпта вместо встроенного - можно добавить к сообщению через разделитель `|`
 
+## Дополнительные команды
+
+`%50` - указать количество шагов сэмплера
+
+`$0.5` - strength для image2image controlnet модели
+
+
 Исходная картинка | Результат
 --- | ---
 ![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_src.jpg) | ![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_result.jpg) Милый демон с белой змеиной чешуёй, изумрудные глаза, острые когти 1024x1024
