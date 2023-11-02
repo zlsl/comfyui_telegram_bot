@@ -13,7 +13,11 @@ In the prompt you can specify the size WIDTHxHEIGHT. For example - 1024x512
 
 To add a negative prompt, add it to the end of the message using the '|' separator.
 
-Teams:
+Commands:
+
+/models - list models
+
+/loras - list LoRAs
 
 /upscale .... - creates a high-resolution image
 
@@ -48,3 +52,9 @@ loras:
   - 'akashiba|aka_shiba_offset.safetensors|1|'
   - 'alien|alien_lora.safetensors|0.5|alien, professional photo'
   - 'c4t|c4tt4stic6(1).safetensors|0.9|c4tt4stic cat'
+
+models:
+  - 'rev|revAnimatedFp16_122.safetensors'
+  - 'rel|Reliberate.safetensors'
+  - 'jug|juggernaut_aftermath.safetensors'
+

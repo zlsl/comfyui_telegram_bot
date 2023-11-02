@@ -15,6 +15,10 @@ bot:
 
 Команды:
 
+/models - список моделей
+
+/loras - спимок LoRA
+
 /upscale .... - создаст картинку высокого разрешения
 
 /face .... - исправит дефекты лиц"
@@ -48,3 +52,9 @@ loras:
   - 'akashiba|aka_shiba_offset.safetensors|1|'
   - 'alien|alien_lora.safetensors|0.5|alien, professional photo'
   - 'c4t|c4tt4stic6(1).safetensors|0.9|c4tt4stic cat'
+
+models:
+  - 'rev|revAnimatedFp16_122.safetensors'
+  - 'rel|Reliberate.safetensors'
+  - 'jug|juggernaut_aftermath.safetensors'
+

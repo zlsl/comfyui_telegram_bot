@@ -85,9 +85,20 @@ if (config['loras'] is not None): # Has loras
                 'prompt': tmp[3]
                 })
 
+models = []
+if (config['models'] is not None): # Has models
+    for model in config['models']:
+        tmp = model.split('|')
+        if (len(tmp) == 2):
+            log.info('Add model - ' + tmp[1])
+            models.append({
+                'name': tmp[0],
+                'model_file': tmp[1]
+                })
+
 
 def get_lora(prompt):
-    lr = re.findall('\\#\\w+\\:?\\d*.?\\d*\\s', prompt) #\\#\\w+
+    lr = re.findall('\\#\\w+\\:?\\d*.?\\d*\\s', prompt)
 
     if lr:
         lr = lr[0].replace('#', '').strip()
@@ -104,8 +115,20 @@ def get_lora(prompt):
                 if strength:
                     lora = copy.deepcopy(lora)
                     lora['strength'] = strength
-                    log.info("Lora: " + lora['name'] + ' ' + lora['lora_file'])
+                log.info("Lora: " + lora['name'] + ' ' + lora['lora_file'])
                 return lora
+    return False
+
+
+def get_model(prompt):
+    md = re.findall('\\@\\w+', prompt)
+
+    if md:
+        md = md[0].replace('@', '').strip()
+        for model in models:
+            if model['name'] == md:
+                log.info("Model: " + model['name'] + ' ' + model['model_file'])
+                return model
     return False
 
 
@@ -164,7 +187,7 @@ async def check_access(id):
     return False
 
 
-def setup_workflow(wf, prompt, source_image = '', lora = None):
+def setup_workflow(wf, prompt, source_image = '', lora = None, model = None):
     workflow = copy.deepcopy(wf)
     seed = random.randint(1, 18446744073709519872)
 
@@ -184,6 +207,9 @@ def setup_workflow(wf, prompt, source_image = '', lora = None):
     if lora:
         prompt = lora['prompt'] + ',' + prompt
         prompt = prompt.replace('#' + lora['name'], '')
+
+    if model:
+        prompt = prompt.replace('@' + model['name'], '')
 
     sizes = re.findall('\d+x\d+', prompt)
     if sizes:
@@ -220,7 +246,10 @@ def setup_workflow(wf, prompt, source_image = '', lora = None):
 
     for node in workflow:
         if ("ckpt_name" in workflow[node]['inputs']):
-            workflow[node]['inputs']['ckpt_name'] = DEFAULT_MODEL
+            if model:
+                workflow[node]['inputs']['ckpt_name'] = model['model_file']
+            else:
+                workflow[node]['inputs']['ckpt_name'] = DEFAULT_MODEL
 
         if ("vae_name" in workflow[node]['inputs']):
             workflow[node]['inputs']['vae_name'] = DEFAULT_VAE
@@ -333,11 +362,11 @@ def get_images(ws, prompt):
     return output_images
 
 
-async def t2i(chat, prompts, target_workflow, lora):
+async def t2i(chat, prompts, target_workflow, lora, model):
     if not await check_access(chat.id):
         return
 
-    workflow = setup_workflow(target_workflow, prompts, None, lora)
+    workflow = setup_workflow(target_workflow, prompts, None, lora, model)
 
     ws = websocket.WebSocket()
     ws.connect("ws://{}/ws?clientId={}".format(SERVER_ADDRESS, client_id))
@@ -357,7 +386,7 @@ async def t2i(chat, prompts, target_workflow, lora):
             await bot.send_document(chat_id=chat.id, document=pd)
 
 
-async def i2i(chat, prompts, target_workflow, photo, lora):
+async def i2i(chat, prompts, target_workflow, photo, lora, model):
     if not await check_access(chat.id):
         return
 
@@ -369,7 +398,7 @@ async def i2i(chat, prompts, target_workflow, photo, lora):
     with open("img2img/" + fn, 'wb') as new_file:
         new_file.write(imgf)    
 
-    workflow = setup_workflow(target_workflow, prompts, os.getcwd() + "/img2img/" + fn, lora)
+    workflow = setup_workflow(target_workflow, prompts, os.getcwd() + "/img2img/" + fn, lora, model)
 
     ws = websocket.WebSocket()
     ws.connect("ws://{}/ws?clientId={}".format(SERVER_ADDRESS, client_id))
@@ -396,12 +425,29 @@ async def start_message(message):
     await bot.send_message(chat_id=message.chat.id, text=HELP_TEXT)
 
 
+@bot.message_handler(commands=['models'])
+async def start_message(message):
+    md = 'Use @model_name\n'
+    for m in models:
+        md = md + m['name'] + "\n"
+    await bot.send_message(chat_id=message.chat.id, text=md)
+
+
+@bot.message_handler(commands=['loras'])
+async def start_message(message):
+    ld = 'Use @lora_name or @lora_name:strength\n'
+    for l in loras:
+        ld = ld + l['name'] + "\n"
+    await bot.send_message(chat_id=message.chat.id, text=ld)
+
+
 @bot.message_handler(content_types='text')
 async def message_reply(message):
     log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
     prompt = message.text
     wf = wf_t2i
     lora = get_lora(prompt)
+    model = get_model(prompt)
     if lora:
         wf = wf_lora_t2i
         if ('/face' in prompt):
@@ -418,7 +464,7 @@ async def message_reply(message):
             wf = wf_t2i_upscale
             prompt = prompt.replace('/upscale', '')
 
-    await t2i(message.chat, message.text, wf, lora)
+    await t2i(message.chat, message.text, wf, lora, model)
 
 
 @bot.message_handler(content_types='photo')
@@ -427,6 +473,7 @@ async def message_reply(message):
     prompt = message.caption
     wf = wf_i2i
     lora = get_lora(prompt)
+    model = get_model(prompt)
     if lora:
         wf = wf_lora_i2i
         if ('/face' in prompt):
@@ -443,7 +490,7 @@ async def message_reply(message):
             wf = wf_i2i_upscale
             prompt = prompt.replace('/upscale', '')
 
-    await i2i(message.chat, prompt, wf, message.photo, lora)
+    await i2i(message.chat, prompt, wf, message.photo, lora, model)
 
 
 log.info("Starting bot")
