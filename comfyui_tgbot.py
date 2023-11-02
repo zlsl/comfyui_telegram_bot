@@ -57,6 +57,7 @@ with open('config.yaml') as f:
     SAMPLER_STEPS = config['comfyui']['SAMPLER_STEPS']
     TOKEN_MERGE_RATIO = config['comfyui']['TOKEN_MERGE_RATIO']
     CLIP_SKIP = config['comfyui']['CLIP_SKIP']
+    ALLOW_DIRECT_LORA = config['comfyui']['ALLOW_DIRECT_LORA']
 
 if not os.path.exists('tmp'):
     log.info("Creating tmp folder")
@@ -85,14 +86,25 @@ if (config['loras'] is not None): # Has loras
 
 
 def get_lora(prompt):
-    lr = re.findall('\\#\\w+', prompt)
+    lr = re.findall('\\#\\w+\\:?\\d*.?\\d*', prompt) #\\#\\w+
+
     if lr:
-        lr = lr[0].replace('#', '')
+        lr = lr[0].replace('#', '').strip()
+        if (":" in lr): # strength
+            tmp = lr.split(':')
+            lr = tmp[0]
+            strength = tmp[1]
+        else:
+            strength = None
         for lora in loras:
             if lora['name'] == lr:
+                if strength:
+                    lora = copy.deepcopy(lora)
+                    lora['strength'] = strength
+                    log.info("Lora: " + lora['name'])
                 return lora
-
     return False
+
 
 client_id = str(uuid.uuid4())
 
@@ -103,6 +115,12 @@ with open('workflows/i2i.json') as json_file:
 
 with open('workflows/lora_i2i.json') as json_file:
     wf_lora_i2i = json.load(json_file)
+
+with open('workflows/lora_i2i_upscale.json') as json_file:
+    wf_lora_i2i_upscale = json.load(json_file)
+
+with open('workflows/lora_i2i_facefix_upscale.json') as json_file:
+    wf_lora_i2i_facefix_upscale = json.load(json_file)
 
 with open('workflows/i2i_upscale.json') as json_file:
     wf_i2i_upscale = json.load(json_file)
@@ -118,6 +136,15 @@ with open('workflows/t2i_facefix_upscale.json') as json_file:
 
 with open('workflows/t2i_upscale.json') as json_file:
     wf_t2i_upscale = json.load(json_file)
+
+with open('workflows/lora_t2i.json') as json_file:
+    wf_lora_t2i = json.load(json_file)
+
+with open('workflows/lora_t2i_facefix_upscale.json') as json_file:
+    wf_lora_t2i_facefix_upscale = json.load(json_file)
+
+with open('workflows/lora_t2i_upscale.json') as json_file:
+    wf_lora_t2i_upscale = json.load(json_file)
 
 
 async def check_access(id):
@@ -177,7 +204,10 @@ def setup_workflow(wf, prompt, source_image = '', lora = None):
 
         if ("control_net_name" in workflow[node]['inputs']):
             workflow[node]['inputs']['control_net_name'] = DEFAULT_CONTROLNET
-            workflow[node]['inputs']['strength'] = CONTROLNET_STRENGTH
+
+        if ("strength" in workflow[node]['inputs']):
+            if (workflow[node]['class_type'] == 'ControlNetApply'):
+               workflow[node]['inputs']['strength'] = CONTROLNET_STRENGTH
 
         if ("width" in workflow[node]['inputs']):
             workflow[node]['inputs']['width'] = width
@@ -227,6 +257,8 @@ def setup_workflow(wf, prompt, source_image = '', lora = None):
             if ("lora_name" in workflow[node]['inputs']):
                 workflow[node]['inputs']['lora_name'] = lora['lora_file']
                 workflow[node]['inputs']['strength_model'] = lora['strength']
+
+#    print(json.dumps(workflow, indent=2))
 
     return workflow
 
@@ -278,7 +310,7 @@ def get_images(ws, prompt):
     return output_images
 
 
-async def t2i(chat, prompts, target_workflow):
+async def t2i(chat, prompts, target_workflow, lora):
     if not await check_access(chat.id):
         return
 
@@ -341,22 +373,29 @@ async def start_message(message):
     await bot.send_message(chat_id=message.chat.id, text=HELP_TEXT)
 
 
-@bot.message_handler(commands=['face'])
-async def start_message(message):
-    log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
-    await t2i(message.chat, message.text.replace("/face", ""), wf_t2i_facefix_upscale)
-
-
-@bot.message_handler(commands=['upscale'])
-async def start_message(message):
-    log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
-    await t2i(message.chat, message.text.replace("/upscale", ""), wf_t2i_upscale)
-
-
 @bot.message_handler(content_types='text')
 async def message_reply(message):
     log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
-    await t2i(message.chat, message.text, wf_t2i)
+    prompt = message.text
+    wf = wf_t2i
+    lora = get_lora(prompt)
+    if lora:
+        wf = wf_lora_t2i
+        if ('/face' in prompt):
+            wf = wf_lora_t2i_facefix_upscale
+            prompt = prompt.replace('/face', '')
+        if ('/upscale' in prompt):
+            wf = wf_lora_t2i_upscale
+            prompt = prompt.replace('/upscale', '')
+    else:
+        if ('/face' in prompt):
+            wf = wf_t2i_facefix_upscale
+            prompt = prompt.replace('/face', '')
+        if ('/upscale' in prompt):
+            wf = wf_t2i_upscale
+            prompt = prompt.replace('/upscale', '')
+
+    await t2i(message.chat, message.text, wf, lora)
 
 
 @bot.message_handler(content_types='photo')
@@ -367,13 +406,19 @@ async def message_reply(message):
     lora = get_lora(prompt)
     if lora:
         wf = wf_lora_i2i
+        if ('/face' in prompt):
+            wf = wf_lora_i2i_facefix_upscale
+            prompt = prompt.replace('/face', '')
+        if ('/upscale' in prompt):
+            wf = wf_lora_i2i_upscale
+            prompt = prompt.replace('/upscale', '')
     else:
-        if ('/face ' in prompt):
+        if ('/face' in prompt):
             wf = wf_i2i_facefix_upscale
-            prompt = prompt.replace('/face ', '')
-        if ('/upscale ' in prompt):
+            prompt = prompt.replace('/face', '')
+        if ('/upscale' in prompt):
             wf = wf_i2i_upscale
-            prompt = prompt.replace('/upscale ', '')
+            prompt = prompt.replace('/upscale', '')
 
     await i2i(message.chat, prompt, wf, message.photo, lora)
 

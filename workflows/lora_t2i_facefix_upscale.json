@@ -39,7 +39,7 @@
   },
   "13": {
     "inputs": {
-      "seed": 1109538093127051,
+      "seed": 763997947006615,
       "steps": 30,
       "cfg": 7,
       "sampler_name": "ddim",
@@ -50,7 +50,7 @@
         0
       ],
       "positive": [
-        "38",
+        "7",
         0
       ],
       "negative": [
@@ -97,7 +97,7 @@
     "inputs": {
       "filename_prefix": "ComfyUI",
       "images": [
-        "14",
+        "33",
         0
       ]
     },
@@ -109,22 +109,9 @@
     },
     "class_type": "CheckpointLoaderSimple"
   },
-  "27": {
-    "inputs": {
-      "control_net_name": "control_v11f1e_sd15_tile.pth"
-    },
-    "class_type": "ControlNetLoader"
-  },
-  "30": {
-    "inputs": {
-      "image": "source image",
-      "choose file to upload": "image"
-    },
-    "class_type": "LoadImage"
-  },
   "32": {
     "inputs": {
-      "lora_name": "(2)doom_whiplash-10.safetensors",
+      "lora_name": "vlozhkin6.safetensors",
       "strength_model": 1,
       "strength_clip": 1,
       "model": [
@@ -138,22 +125,85 @@
     },
     "class_type": "LoraLoader"
   },
-  "38": {
+  "33": {
     "inputs": {
-      "strength": 1,
-      "conditioning": [
-        "7",
-        0
-      ],
-      "control_net": [
-        "27",
+      "upscale_model": [
+        "34",
         0
       ],
       "image": [
-        "30",
+        "35",
         0
       ]
     },
-    "class_type": "ControlNetApply"
+    "class_type": "ImageUpscaleWithModel"
+  },
+  "34": {
+    "inputs": {
+      "model_name": "4xNMKDSuperscale_4xNMKDSuperscale.pt"
+    },
+    "class_type": "UpscaleModelLoader"
+  },
+  "35": {
+    "inputs": {
+      "guide_size": 256,
+      "guide_size_for": true,
+      "max_size": 768,
+      "seed": 523075723956457,
+      "steps": 30,
+      "cfg": 8,
+      "sampler_name": "ddim",
+      "scheduler": "normal",
+      "denoise": 0.5,
+      "feather": 5,
+      "noise_mask": true,
+      "force_inpaint": true,
+      "bbox_threshold": 0.5,
+      "bbox_dilation": 10,
+      "bbox_crop_factor": 3,
+      "sam_detection_hint": "center-1",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 10,
+      "wildcard": "",
+      "image": [
+        "14",
+        0
+      ],
+      "model": [
+        "32",
+        0
+      ],
+      "clip": [
+        "32",
+        1
+      ],
+      "vae": [
+        "16",
+        0
+      ],
+      "positive": [
+        "7",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "bbox_detector": [
+        "37",
+        0
+      ]
+    },
+    "class_type": "FaceDetailer"
+  },
+  "37": {
+    "inputs": {
+      "model_name": "bbox/face_yolov8m.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider"
   }
 }

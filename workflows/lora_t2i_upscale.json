@@ -39,7 +39,7 @@
   },
   "13": {
     "inputs": {
-      "seed": 1109538093127051,
+      "seed": 763997947006615,
       "steps": 30,
       "cfg": 7,
       "sampler_name": "ddim",
@@ -50,7 +50,7 @@
         0
       ],
       "positive": [
-        "38",
+        "7",
         0
       ],
       "negative": [
@@ -97,7 +97,7 @@
     "inputs": {
       "filename_prefix": "ComfyUI",
       "images": [
-        "14",
+        "33",
         0
       ]
     },
@@ -109,22 +109,9 @@
     },
     "class_type": "CheckpointLoaderSimple"
   },
-  "27": {
-    "inputs": {
-      "control_net_name": "control_v11f1e_sd15_tile.pth"
-    },
-    "class_type": "ControlNetLoader"
-  },
-  "30": {
-    "inputs": {
-      "image": "source image",
-      "choose file to upload": "image"
-    },
-    "class_type": "LoadImage"
-  },
   "32": {
     "inputs": {
-      "lora_name": "(2)doom_whiplash-10.safetensors",
+      "lora_name": "vlozhkin6.safetensors",
       "strength_model": 1,
       "strength_clip": 1,
       "model": [
@@ -138,22 +125,23 @@
     },
     "class_type": "LoraLoader"
   },
-  "38": {
+  "33": {
     "inputs": {
-      "strength": 1,
-      "conditioning": [
-        "7",
-        0
-      ],
-      "control_net": [
-        "27",
+      "upscale_model": [
+        "34",
         0
       ],
       "image": [
-        "30",
+        "14",
         0
       ]
     },
-    "class_type": "ControlNetApply"
+    "class_type": "ImageUpscaleWithModel"
+  },
+  "34": {
+    "inputs": {
+      "model_name": "4xNMKDSuperscale_4xNMKDSuperscale.pt"
+    },
+    "class_type": "UpscaleModelLoader"
   }
 }

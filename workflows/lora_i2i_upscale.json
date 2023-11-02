@@ -39,7 +39,7 @@
   },
   "13": {
     "inputs": {
-      "seed": 1109538093127051,
+      "seed": 787849016043248,
       "steps": 30,
       "cfg": 7,
       "sampler_name": "ddim",
@@ -97,7 +97,7 @@
     "inputs": {
       "filename_prefix": "ComfyUI",
       "images": [
-        "14",
+        "33",
         0
       ]
     },
@@ -137,6 +137,25 @@
       ]
     },
     "class_type": "LoraLoader"
+  },
+  "33": {
+    "inputs": {
+      "upscale_model": [
+        "34",
+        0
+      ],
+      "image": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel"
+  },
+  "34": {
+    "inputs": {
+      "model_name": "4xNMKDSuperscale_4xNMKDSuperscale.pt"
+    },
+    "class_type": "UpscaleModelLoader"
   },
   "38": {
     "inputs": {
