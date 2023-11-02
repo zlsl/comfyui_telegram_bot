@@ -69,12 +69,40 @@ if not os.path.exists('img2img'):
 if (config['whitelist'] is None): # Allow all, whitelist is empty
     log.warning("Whitelist is empty, all users allowed to access this bot! Modify config.yaml")
 
+
+loras = []
+if (config['loras'] is not None): # Has loras
+    for lora in config['loras']:
+        tmp = lora.split('|')
+        if (len(tmp) == 4):
+            log.info('Add LoRA - ' + tmp[1])
+            loras.append({
+                'name': tmp[0],
+                'lora_file': tmp[1],
+                'strength': tmp[2],
+                'prompt': tmp[3]
+                })
+
+
+def get_lora(prompt):
+    lr = re.findall('\\#\\w+', prompt)
+    if lr:
+        lr = lr[0].replace('#', '')
+        for lora in loras:
+            if lora['name'] == lr:
+                return lora
+
+    return False
+
 client_id = str(uuid.uuid4())
 
 bot = AsyncTeleBot(BOT_TOKEN)
 
 with open('workflows/i2i.json') as json_file:
     wf_i2i = json.load(json_file)
+
+with open('workflows/lora_i2i.json') as json_file:
+    wf_lora_i2i = json.load(json_file)
 
 with open('workflows/i2i_upscale.json') as json_file:
     wf_i2i_upscale = json.load(json_file)
@@ -106,7 +134,7 @@ async def check_access(id):
     return False
 
 
-def setup_workflow(wf, prompt, source_image = ''):
+def setup_workflow(wf, prompt, source_image = '', lora = None):
     workflow = copy.deepcopy(wf)
     seed = random.randint(1, 18446744073709519872)
 
@@ -118,8 +146,12 @@ def setup_workflow(wf, prompt, source_image = ''):
         prompt = ps[0].strip() + BEAUTIFY_PROMPT
         negative_prompt = ps[1].strip()
     else:
-        prompt = prompt + BEAUTIFY_PROMPT
+        prompt = prompt# + BEAUTIFY_PROMPT
         negative_prompt = NEGATIVE_PROMPT
+
+    if lora:
+        prompt = lora['prompt'] + ',' + prompt
+        prompt = prompt.replace('#' + lora['name'], '')
 
     sizes = re.findall('\d+x\d+', prompt)
     if sizes:
@@ -190,6 +222,11 @@ def setup_workflow(wf, prompt, source_image = ''):
         if ("ratio" in workflow[node]['inputs']):
             if (workflow[node]['class_type'] == 'TomePatchModel'):
                workflow[node]['inputs']['ratio'] = TOKEN_MERGE_RATIO
+
+        if lora:
+            if ("lora_name" in workflow[node]['inputs']):
+                workflow[node]['inputs']['lora_name'] = lora['lora_file']
+                workflow[node]['inputs']['strength_model'] = lora['strength']
 
     return workflow
 
@@ -265,7 +302,7 @@ async def t2i(chat, prompts, target_workflow):
             await bot.send_document(chat_id=chat.id, document=pd)
 
 
-async def i2i(chat, prompts, target_workflow, photo):
+async def i2i(chat, prompts, target_workflow, photo, lora):
     if not await check_access(chat.id):
         return
 
@@ -277,7 +314,7 @@ async def i2i(chat, prompts, target_workflow, photo):
     with open("img2img/" + fn, 'wb') as new_file:
         new_file.write(imgf)    
 
-    workflow = setup_workflow(target_workflow, prompts, os.getcwd() + "/img2img/" + fn)
+    workflow = setup_workflow(target_workflow, prompts, os.getcwd() + "/img2img/" + fn, lora)
 
     ws = websocket.WebSocket()
     ws.connect("ws://{}/ws?clientId={}".format(SERVER_ADDRESS, client_id))
@@ -327,14 +364,18 @@ async def message_reply(message):
     log.info("I2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.caption)
     prompt = message.caption
     wf = wf_i2i
-    if ('/face ' in prompt):
-        wf = wf_i2i_facefix_upscale
-        prompt = prompt.replace('/face ', '')
-    if ('/upscale ' in prompt):
-        wf = wf_i2i_upscale
-        prompt = prompt.replace('/upscale ', '')
+    lora = get_lora(prompt)
+    if lora:
+        wf = wf_lora_i2i
+    else:
+        if ('/face ' in prompt):
+            wf = wf_i2i_facefix_upscale
+            prompt = prompt.replace('/face ', '')
+        if ('/upscale ' in prompt):
+            wf = wf_i2i_upscale
+            prompt = prompt.replace('/upscale ', '')
 
-    await i2i(message.chat, prompt, wf, message.photo)
+    await i2i(message.chat, prompt, wf, message.photo, lora)
 
 
 log.info("Starting bot")

@@ -38,3 +38,10 @@ comfyui:
   NEGATIVE_PROMPT: 'low quality, worst quality, embedding:badhandv4, blurred, deformed, embedding:EasyNegative, embedding:badquality, watermark, text, font, signage, artist name, text, caption, jpeg artifacts'
 
 whitelist:
+
+loras:
+  - 'vlozhkin|vlozhkin3.safetensors|1|vlozhkin style illustration'
+  - 'jh|jamie_hewlett_style.safetensors|1|jamie hewlett style'
+  - 'minecraft|minecraft_square_style_v2-10.safetensors|1|minecraft square style'
+  - 'giardino|Giardino_Style-13.safetensors|1|giardino style illustration'
+

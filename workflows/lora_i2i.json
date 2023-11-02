@@ -1,0 +1,150 @@
+{
+  "3": {
+    "inputs": {
+      "vae_name": "vaeFtMse840000Ema_v10.safetensors"
+    },
+    "class_type": "VAELoader"
+  },
+  "4": {
+    "inputs": {
+      "control_net_name": "control_v11f1e_sd15_tile.pth"
+    },
+    "class_type": "ControlNetLoader"
+  },
+  "5": {
+    "inputs": {
+      "strength": 0.9,
+      "start_percent": 0,
+      "end_percent": 1,
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "control_net": [
+        "4",
+        0
+      ],
+      "image": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced"
+  },
+  "6": {
+    "inputs": {
+      "text": "positive prompt",
+      "clip": [
+        "13",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "7": {
+    "inputs": {
+      "text": "negative prompt",
+      "clip": [
+        "13",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "8": {
+    "inputs": {
+      "ratio": 0.3,
+      "model": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "TomePatchModel"
+  },
+  "9": {
+    "inputs": {
+      "image": "source image",
+      "choose file to upload": "image"
+    },
+    "class_type": "LoadImage"
+  },
+  "10": {
+    "inputs": {
+      "add_noise": "enable",
+      "noise_seed": 701259981290069,
+      "steps": 30,
+      "cfg": 7,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "start_at_step": 0,
+      "end_at_step": 10000,
+      "return_with_leftover_noise": "disable",
+      "preview_method": "none",
+      "vae_decode": "true",
+      "model": [
+        "13",
+        0
+      ],
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "5",
+        1
+      ],
+      "latent_image": [
+        "11",
+        0
+      ],
+      "optional_vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "KSampler Adv. (Efficient)"
+  },
+  "11": {
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage"
+  },
+  "12": {
+    "inputs": {
+      "images": [
+        "10",
+        5
+      ]
+    },
+    "class_type": "PreviewImage"
+  },
+  "13": {
+    "inputs": {
+      "lora_name": "vlozhkin3.safetensors",
+      "strength_model": 1,
+      "strength_clip": 1,
+      "model": [
+        "8",
+        0
+      ],
+      "clip": [
+        "15",
+        1
+      ]
+    },
+    "class_type": "LoraLoader"
+  },
+  "15": {
+    "inputs": {
+      "ckpt_name": "Reliberate.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  }
+}
