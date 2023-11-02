@@ -86,7 +86,7 @@ if (config['loras'] is not None): # Has loras
 
 
 def get_lora(prompt):
-    lr = re.findall('\\#\\w+\\:?\\d*.?\\d*', prompt) #\\#\\w+
+    lr = re.findall('\\#\\w+\\:?\\d*.?\\d*\\s', prompt) #\\#\\w+
 
     if lr:
         lr = lr[0].replace('#', '').strip()
@@ -94,6 +94,8 @@ def get_lora(prompt):
             tmp = lr.split(':')
             lr = tmp[0]
             strength = tmp[1]
+            if ("." not in strength):
+                strength = strength + '.0'
         else:
             strength = None
         for lora in loras:
@@ -101,7 +103,7 @@ def get_lora(prompt):
                 if strength:
                     lora = copy.deepcopy(lora)
                     lora['strength'] = strength
-                    log.info("Lora: " + lora['name'])
+                    log.info("Lora: " + lora['name'] + ' ' + lora['lora_file'])
                 return lora
     return False
 
@@ -170,10 +172,12 @@ def setup_workflow(wf, prompt, source_image = '', lora = None):
 
     if ('|' in prompt): #got negative prompt part
         ps = prompt.split('|')
-        prompt = ps[0].strip() + BEAUTIFY_PROMPT
+        if not lora:
+            prompt = ps[0].strip() + BEAUTIFY_PROMPT
         negative_prompt = ps[1].strip()
     else:
-        prompt = prompt# + BEAUTIFY_PROMPT
+        if not lora:
+            prompt = ps[0].strip() + BEAUTIFY_PROMPT
         negative_prompt = NEGATIVE_PROMPT
 
     if lora:
@@ -314,7 +318,7 @@ async def t2i(chat, prompts, target_workflow, lora):
     if not await check_access(chat.id):
         return
 
-    workflow = setup_workflow(target_workflow, prompts)
+    workflow = setup_workflow(target_workflow, prompts, None, lora)
 
     ws = websocket.WebSocket()
     ws.connect("ws://{}/ws?clientId={}".format(SERVER_ADDRESS, client_id))
