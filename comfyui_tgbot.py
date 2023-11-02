@@ -177,7 +177,7 @@ def setup_workflow(wf, prompt, source_image = '', lora = None):
         negative_prompt = ps[1].strip()
     else:
         if not lora:
-            prompt = ps[0].strip() + BEAUTIFY_PROMPT
+            prompt = prompt + BEAUTIFY_PROMPT
         negative_prompt = NEGATIVE_PROMPT
 
     if lora:
