@@ -1,0 +1,320 @@
+{
+  "1": {
+    "inputs": {
+      "ckpt_name": "juggernaut_aftermath.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple"
+  },
+  "2": {
+    "inputs": {
+      "vae_name": "vaeFtMse840000Ema_v10.safetensors"
+    },
+    "class_type": "VAELoader"
+  },
+  "3": {
+    "inputs": {
+      "ipadapter_file": "ip-adapter-plus-face_sd15.safetensors"
+    },
+    "class_type": "IPAdapterModelLoader"
+  },
+  "4": {
+    "inputs": {
+      "clip_name": "clip_vision/model.safetensors"
+    },
+    "class_type": "CLIPVisionLoader"
+  },
+  "5": {
+    "inputs": {
+      "weight": 1,
+      "noise": 0.49,
+      "ipadapter": [
+        "3",
+        0
+      ],
+      "clip_vision": [
+        "4",
+        0
+      ],
+      "image": [
+        "34",
+        0
+      ],
+      "model": [
+        "31",
+        0
+      ]
+    },
+    "class_type": "IPAdapterApply"
+  },
+  "7": {
+    "inputs": {
+      "text": "positive prompt",
+      "clip": [
+        "36",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "8": {
+    "inputs": {
+      "text": "negative prompt",
+      "clip": [
+        "36",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "9": {
+    "inputs": {
+      "seed": 1032491175053593,
+      "steps": 40,
+      "cfg": 7.5,
+      "sampler_name": "ddim",
+      "scheduler": "karras",
+      "denoise": 1,
+      "model": [
+        "36",
+        0
+      ],
+      "positive": [
+        "20",
+        0
+      ],
+      "negative": [
+        "8",
+        0
+      ],
+      "latent_image": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "KSampler"
+  },
+  "10": {
+    "inputs": {
+      "width": 512,
+      "height": 768,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage"
+  },
+  "11": {
+    "inputs": {
+      "samples": [
+        "9",
+        0
+      ],
+      "vae": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "VAEDecode"
+  },
+  "14": {
+    "inputs": {
+      "image": "source face",
+      "choose file to upload": "image"
+    },
+    "class_type": "LoadImage"
+  },
+  "19": {
+    "inputs": {
+      "ratio": 0.4,
+      "model": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "TomePatchModel"
+  },
+  "20": {
+    "inputs": {
+      "strength": 0.18,
+      "conditioning": [
+        "7",
+        0
+      ],
+      "control_net": [
+        "21",
+        0
+      ],
+      "image": [
+        "22",
+        0
+      ]
+    },
+    "class_type": "ControlNetApply"
+  },
+  "21": {
+    "inputs": {
+      "control_net_name": "control_v11f1e_sd15_tile.pth"
+    },
+    "class_type": "ControlNetLoader"
+  },
+  "22": {
+    "inputs": {
+      "image": "source image",
+      "choose file to upload": "image"
+    },
+    "class_type": "LoadImage"
+  },
+  "23": {
+    "inputs": {
+      "guide_size": 256,
+      "guide_size_for": true,
+      "max_size": 768,
+      "seed": 1106622897559441,
+      "steps": 20,
+      "cfg": 8,
+      "sampler_name": "ddim",
+      "scheduler": "normal",
+      "denoise": 0.33,
+      "feather": 8,
+      "noise_mask": true,
+      "force_inpaint": true,
+      "bbox_threshold": 0.5,
+      "bbox_dilation": 10,
+      "bbox_crop_factor": 1.7000000000000002,
+      "sam_detection_hint": "center-1",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 10,
+      "wildcard": "",
+      "image": [
+        "11",
+        0
+      ],
+      "model": [
+        "36",
+        0
+      ],
+      "clip": [
+        "1",
+        1
+      ],
+      "vae": [
+        "2",
+        0
+      ],
+      "positive": [
+        "7",
+        0
+      ],
+      "negative": [
+        "8",
+        0
+      ],
+      "bbox_detector": [
+        "29",
+        0
+      ]
+    },
+    "class_type": "FaceDetailer"
+  },
+  "29": {
+    "inputs": {
+      "model_name": "bbox/face_yolov8m.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider"
+  },
+  "30": {
+    "inputs": {
+      "filename_prefix": "IPAdapter",
+      "images": [
+        "37",
+        0
+      ]
+    },
+    "class_type": "SaveImage"
+  },
+  "31": {
+    "inputs": {
+      "weight": 0.15,
+      "noise": 0.53,
+      "ipadapter": [
+        "32",
+        0
+      ],
+      "clip_vision": [
+        "4",
+        0
+      ],
+      "image": [
+        "35",
+        0
+      ],
+      "model": [
+        "19",
+        0
+      ]
+    },
+    "class_type": "IPAdapterApply"
+  },
+  "32": {
+    "inputs": {
+      "ipadapter_file": "ip-adapter-plus_sd15.safetensors"
+    },
+    "class_type": "IPAdapterModelLoader"
+  },
+  "34": {
+    "inputs": {
+      "interpolation": "LANCZOS",
+      "crop_position": "center",
+      "sharpening": 0.03,
+      "image": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "PrepImageForClipVision"
+  },
+  "35": {
+    "inputs": {
+      "image": "style image",
+      "choose file to upload": "image"
+    },
+    "class_type": "LoadImage"
+  },
+  "36": {
+    "inputs": {
+      "lora_name": "Curze MK1 by CARAXES.safetensors",
+      "strength_model": 0.5,
+      "strength_clip": 1,
+      "model": [
+        "5",
+        0
+      ],
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "LoraLoader"
+  },
+  "37": {
+    "inputs": {
+      "upscale_model": [
+        "38",
+        0
+      ],
+      "image": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel"
+  },
+  "38": {
+    "inputs": {
+      "model_name": "4xNMKDSuperscale_4xNMKDSuperscale.pt"
+    },
+    "class_type": "UpscaleModelLoader"
+  }
+}

@@ -13,6 +13,7 @@ if not os.path.exists('config.yaml'):
     log.critical("No config.yaml file found!")
     sys.exit(os.EX_CONFIG) 
 
+import pickle 
 import time
 import copy
 import re
@@ -60,16 +61,32 @@ with open('config.yaml') as f:
     CLIP_SKIP = config['comfyui']['CLIP_SKIP']
     ALLOW_DIRECT_LORA = config['comfyui']['ALLOW_DIRECT_LORA']
 
-if not os.path.exists('tmp'):
-    log.info("Creating tmp folder")
-    os.makedirs('tmp')
+if not os.path.exists('upload'):
+    log.info("Creating upload folder")
+    os.makedirs('upload')
 
-if not os.path.exists('img2img'):
-    log.info("Creating img2img folder")
-    os.makedirs('img2img')
+if not os.path.exists('generated'):
+    log.info("Creating generated folder")
+    os.makedirs('generated')
 
 if (config['whitelist'] is None): # Allow all, whitelist is empty
     log.warning("Whitelist is empty, all users allowed to access this bot! Modify config.yaml")
+
+if os.path.exists('chat_face.pkl'):
+    with open('chat_face.pkl', 'rb') as f:
+        chat_face = pickle.load(f)
+        if (len(chat_face) > 0):
+            log.info('Loaded chat faces')
+else:
+    chat_face = {}
+
+if os.path.exists('chat_style.pkl'):
+    with open('chat_style.pkl', 'rb') as f:
+        chat_style = pickle.load(f)
+        if (len(chat_style) > 0):
+            log.info('Loaded chat styles')
+else:
+    chat_style = {}
 
 
 loras = []
@@ -129,48 +146,21 @@ def get_model(prompt):
             if model['name'] == md:
                 log.info("Model: " + model['name'] + ' ' + model['model_file'])
                 return model
-    return False
+    return {'model_file' : DEFAULT_MODEL, 'name' : DEFAULT_MODEL}
 
 
 client_id = str(uuid.uuid4())
 
 bot = AsyncTeleBot(BOT_TOKEN)
 
-with open('workflows/i2i.json') as json_file:
-    wf_i2i = json.load(json_file)
+def cmt():
+    return round(time.time() * 1000)
 
-with open('workflows/lora_i2i.json') as json_file:
-    wf_lora_i2i = json.load(json_file)
+with open('workflows/wf_noupscale.json') as json_file:
+    wf_noupscale = json.load(json_file)
 
-with open('workflows/lora_i2i_upscale.json') as json_file:
-    wf_lora_i2i_upscale = json.load(json_file)
-
-with open('workflows/lora_i2i_facefix_upscale.json') as json_file:
-    wf_lora_i2i_facefix_upscale = json.load(json_file)
-
-with open('workflows/i2i_upscale.json') as json_file:
-    wf_i2i_upscale = json.load(json_file)
-
-with open('workflows/i2i_facefix_upscale.json') as json_file:
-    wf_i2i_facefix_upscale = json.load(json_file)
-
-with open('workflows/t2i.json') as json_file:
-    wf_t2i = json.load(json_file)
-
-with open('workflows/t2i_facefix_upscale.json') as json_file:
-    wf_t2i_facefix_upscale = json.load(json_file)
-
-with open('workflows/t2i_upscale.json') as json_file:
-    wf_t2i_upscale = json.load(json_file)
-
-with open('workflows/lora_t2i.json') as json_file:
-    wf_lora_t2i = json.load(json_file)
-
-with open('workflows/lora_t2i_facefix_upscale.json') as json_file:
-    wf_lora_t2i_facefix_upscale = json.load(json_file)
-
-with open('workflows/lora_t2i_upscale.json') as json_file:
-    wf_lora_t2i_upscale = json.load(json_file)
+with open('workflows/wf_upscale.json') as json_file:
+    wf_upscale = json.load(json_file)
 
 
 async def check_access(id):
@@ -187,9 +177,69 @@ async def check_access(id):
     return False
 
 
-def setup_workflow(wf, prompt, source_image = '', lora = None, model = None):
-    workflow = copy.deepcopy(wf)
-    seed = random.randint(1, 18446744073709519872)
+def configure(prompt, cfg):
+    config = cfg
+    config['lora'] = get_lora(prompt)
+    config['model'] = get_model(prompt)
+
+    if ('/face' in prompt):
+        prompt = prompt.replace('/face', '')
+        config['facefix'] = True
+    else:
+        config['facefix'] = False
+
+    if ('/upscale' in prompt):
+        prompt = prompt.replace('/upscale', '')
+
+    if config['lora']:
+        prompt = config['lora']['prompt'] + ',' + prompt
+        prompt = prompt.replace('#' + config['lora']['name'], '')
+
+    if config['model']:
+        prompt = prompt.replace('@' + config['model']['name'], '')
+
+    sizes = re.findall('\d+x\d+', prompt)
+    if sizes:
+        dimensions = sizes[0].split('x')
+        config['width'] = int(dimensions[0])
+        config['height'] = int(dimensions[1])
+        prompt = prompt.replace(sizes[0], '')
+        if (config['width'] > MAX_WIDTH):
+            config['width'] = MAX_WIDTH
+        if (config['height'] > MAX_HEIGHT):
+            config['height'] = MAX_HEIGHT
+    else:
+        config['width'] = DEFAULT_WIDTH
+        config['height'] = DEFAULT_HEIGHT
+
+    steps = re.findall('\\%\\d+', prompt)
+    if steps:
+        prompt = prompt.replace(steps[0], '')
+        config['steps'] = int(steps[0].replace('%', ''))
+        if (config['steps'] > MAX_STEPS):
+            config['steps'] = MAX_STEPS
+    else:
+        config['steps'] = SAMPLER_STEPS
+
+    cn_strength = re.findall('\\$\\d*.?\\d*', prompt)
+    if cn_strength:
+        prompt = prompt.replace(cn_strength[0], '')
+        config['cn_strength'] = cn_strength[0].replace('$', '').replace(' ', '')
+        if ("." not in config['cn_strength']):
+            config['cn_strength'] = config['cn_strength'] + '.0'
+    else:
+        config['cn_strength'] = CONTROLNET_STRENGTH
+
+    ipa_strength = re.findall('\\&\\d*.?\\d*', prompt)
+    if ipa_strength:
+        prompt = prompt.replace(ipa_strength[0], '')
+        config['ipa_strength'] = ipa_strength[0].replace('&', '').replace(' ', '')
+        if ("." not in config['ipa_strength']):
+            config['ipa_strength'] = config['ipa_strength'] + '.0'
+    else:
+        config['ipa_strength'] = CONTROLNET_STRENGTH
+
+    config['seed'] = random.randint(1, 18446744073709519872)
 
     if TRANSLATE:
         prompt = GoogleTranslator(source='auto', target='en').translate(text=prompt)
@@ -198,58 +248,51 @@ def setup_workflow(wf, prompt, source_image = '', lora = None, model = None):
         ps = prompt.split('|')
         if not lora:
             prompt = ps[0].strip() + BEAUTIFY_PROMPT
+        else:
+            prompt = ps[0].strip()
         negative_prompt = ps[1].strip()
     else:
         if not lora:
             prompt = prompt + BEAUTIFY_PROMPT
+        else:
+            prompt = prompt.strip()
         negative_prompt = NEGATIVE_PROMPT
 
-    if lora:
-        prompt = lora['prompt'] + ',' + prompt
-        prompt = prompt.replace('#' + lora['name'], '')
-
-    if model:
-        prompt = prompt.replace('@' + model['name'], '')
-
-    sizes = re.findall('\d+x\d+', prompt)
-    if sizes:
-        dimensions = sizes[0].split('x')
-        width = dimensions[0]
-        height = dimensions[1]
-        prompt = prompt.replace(sizes[0], '')
+    if (config['id'] in chat_face):
+        config['face_image'] = chat_face[config['id']]
+        config['face'] = True  
     else:
-        width = DEFAULT_WIDTH
-        if (width > MAX_WIDTH):
-            width = MAX_WIDTH
+        config['face_image'] = os.getcwd() + '/assets/blank.png'
+        config['face'] = False
 
-        height = DEFAULT_HEIGHT
-        if (height > MAX_HEIGHT):
-            width = MAX_HEIGHT
-
-    steps = re.findall('\\%\\d+', prompt)
-    if steps:
-        prompt = prompt.replace(steps[0], '')
-        steps = int(steps[0].replace('%', ''))
-        if (steps > MAX_STEPS):
-            steps = MAX_STEPS
+    if (config['id'] in chat_style):
+        config['style_image'] = chat_style[config['id']]
+        config['style'] = True  
     else:
-        steps = SAMPLER_STEPS
+        config['style_image'] = os.getcwd() + '/assets/blank.png'
+        config['style'] = False
+        
+    if (not 'source_image' in config):
+        config['source_image'] = os.getcwd() + '/assets/blank.png'
+        config['cn_strength'] = 0
 
-    cn_strength = re.findall('\\$\\d*.?\\d*\\s', prompt)
-    if cn_strength:
-        prompt = prompt.replace(cn_strength[0], '')
-        cn_strength = cn_strength[0].replace('$', '').replace(' ', '')
-        if ("." not in cn_strength):
-            cn_strength = cn_strength + '.0'
+    if (not config['face'] and not config['style']):
+        config['ipa_strength'] = 0
+
+    return prompt, negative_prompt, config
+
+
+def setup_workflow(prompt, config):
+    if ('/upscale' in prompt):
+        workflow = copy.deepcopy(wf_upscale)
     else:
-        cn_strength = CONTROLNET_STRENGTH
+        workflow = copy.deepcopy(wf_noupscale)
+
+    prompt, negative_prompt, config = configure(prompt, config)
 
     for node in workflow:
         if ("ckpt_name" in workflow[node]['inputs']):
-            if model:
-                workflow[node]['inputs']['ckpt_name'] = model['model_file']
-            else:
-                workflow[node]['inputs']['ckpt_name'] = DEFAULT_MODEL
+            workflow[node]['inputs']['ckpt_name'] = config['model']['model_file']
 
         if ("vae_name" in workflow[node]['inputs']):
             workflow[node]['inputs']['vae_name'] = DEFAULT_VAE
@@ -259,19 +302,32 @@ def setup_workflow(wf, prompt, source_image = '', lora = None, model = None):
 
         if ("strength" in workflow[node]['inputs']):
             if (workflow[node]['class_type'] == 'ControlNetApply'):
-               workflow[node]['inputs']['strength'] = cn_strength
+               workflow[node]['inputs']['strength'] = config['cn_strength']
+
+        if ("weight" in workflow[node]['inputs']):
+            if (workflow[node]['class_type'] == 'IPAdapterApply'): # face-5 style-31
+                if (node == "5"): #face
+                    if (config['face']):
+                        workflow[node]['inputs']['weight'] = config['ipa_strength']
+                    else:
+                        workflow[node]['inputs']['weight'] = 0
+                if (node == "31"): #style
+                    if (config['style']):
+                        workflow[node]['inputs']['weight'] = config['ipa_strength']
+                    else:
+                        workflow[node]['inputs']['weight'] = 0
 
         if ("width" in workflow[node]['inputs']):
-            workflow[node]['inputs']['width'] = width
+            workflow[node]['inputs']['width'] = config['width']
 
         if ("height" in workflow[node]['inputs']):
-            workflow[node]['inputs']['height'] = height
+            workflow[node]['inputs']['height'] = config['height']
 
         if ("seed" in workflow[node]['inputs']):
-            workflow[node]['inputs']['seed'] = seed
+            workflow[node]['inputs']['seed'] = config['seed']
 
         if ("noise_seed" in workflow[node]['inputs']):
-            workflow[node]['inputs']['noise_seed'] = seed
+            workflow[node]['inputs']['noise_seed'] = config['seed']
 
         if ("sampler_name" in workflow[node]['inputs']):
             workflow[node]['inputs']['sampler_name'] = SAMPLER
@@ -280,7 +336,7 @@ def setup_workflow(wf, prompt, source_image = '', lora = None, model = None):
             workflow[node]['inputs']['scheduler'] = SCHEDULER
 
         if ("steps" in workflow[node]['inputs']):
-            workflow[node]['inputs']['steps'] = steps
+            workflow[node]['inputs']['steps'] = config['steps']
 
         if ("stop_at_clip_layer" in workflow[node]['inputs']):
             workflow[node]['inputs']['stop_at_clip_layer'] = CLIP_SKIP
@@ -295,7 +351,15 @@ def setup_workflow(wf, prompt, source_image = '', lora = None, model = None):
 
         if ("image" in workflow[node]['inputs']):
             if (workflow[node]['inputs']['image'] == 'source image'):
-               workflow[node]['inputs']['image'] = source_image
+               workflow[node]['inputs']['image'] = config['source_image']
+
+        if ("image" in workflow[node]['inputs']):
+            if (workflow[node]['inputs']['image'] == 'face image'):
+               workflow[node]['inputs']['image'] = config['face_image']
+
+        if ("image" in workflow[node]['inputs']):
+            if (workflow[node]['inputs']['image'] == 'style image'):
+               workflow[node]['inputs']['image'] = config['style_image']
 
         if ("model_name" in workflow[node]['inputs']):
             if (workflow[node]['class_type'] == 'UpscaleModelLoader'):
@@ -305,10 +369,21 @@ def setup_workflow(wf, prompt, source_image = '', lora = None, model = None):
             if (workflow[node]['class_type'] == 'TomePatchModel'):
                workflow[node]['inputs']['ratio'] = TOKEN_MERGE_RATIO
 
-        if lora:
-            if ("lora_name" in workflow[node]['inputs']):
-                workflow[node]['inputs']['lora_name'] = lora['lora_file']
-                workflow[node]['inputs']['strength_model'] = lora['strength']
+        if ("lora_name" in workflow[node]['inputs']):
+            if config['lora']:
+                workflow[node]['inputs']['lora_name'] = config['lora']['lora_file']
+                workflow[node]['inputs']['strength_model'] = config['lora']['strength']
+                workflow[node]['inputs']['strength_clip'] = 1
+            else:
+                workflow[node]['inputs']['lora_name'] = os.getcwd() + '/assets/default_lora.safetensors'
+                workflow[node]['inputs']['strength_model'] = 0
+                workflow[node]['inputs']['strength_clip'] = 0
+
+        if ("bbox_threshold" in workflow[node]['inputs']):
+            if config['facefix']:
+                workflow[node]['inputs']['bbox_threshold'] = 0.75
+            else:
+                workflow[node]['inputs']['bbox_threshold'] = 1
 
 #    print(json.dumps(workflow, indent=2))
 
@@ -362,11 +437,12 @@ def get_images(ws, prompt):
     return output_images
 
 
-async def t2i(chat, prompts, target_workflow, lora, model):
+async def comfy(chat, prompts, cfg):
     if not await check_access(chat.id):
         return
 
-    workflow = setup_workflow(target_workflow, prompts, None, lora, model)
+    cfg['id'] = chat.id
+    workflow = setup_workflow(prompts, cfg)
 
     ws = websocket.WebSocket()
     ws.connect("ws://{}/ws?clientId={}".format(SERVER_ADDRESS, client_id))
@@ -379,39 +455,7 @@ async def t2i(chat, prompts, target_workflow, lora, model):
                 await bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
             except:
                 log.error("Error sending photo")
-            tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts[0:100]) + "_" + str(random.randint(0, 55555555555555)) + ".png"
-            png = Image.open(io.BytesIO(image_data))
-            png.save(tmpn)
-            pd = open(tmpn, 'rb')
-            await bot.send_document(chat_id=chat.id, document=pd)
-
-
-async def i2i(chat, prompts, target_workflow, photo, lora, model):
-    if not await check_access(chat.id):
-        return
-
-    img_id = photo[len(photo)-1].file_id
-    tmp = (await bot.get_file(img_id))
-    imgf = (await bot.download_file(tmp.file_path))
-
-    fn = "source_" + str(chat.id) + "_" + str(random.randint(0, 6666666666666)) + ".png"
-    with open("img2img/" + fn, 'wb') as new_file:
-        new_file.write(imgf)    
-
-    workflow = setup_workflow(target_workflow, prompts, os.getcwd() + "/img2img/" + fn, lora, model)
-
-    ws = websocket.WebSocket()
-    ws.connect("ws://{}/ws?clientId={}".format(SERVER_ADDRESS, client_id))
-    images = get_images(ws, workflow)
-
-    for node_id in images:
-        for image_data in images[node_id]:
-            image = Image.open(io.BytesIO(image_data))
-            try:
-                await bot.send_photo(chat_id=chat.id, photo=image, caption=prompts)
-            except:
-                log.error("Error sending photo")
-            tmpn = "tmp/img_" + str(chat.id) + "_" + sanitize(prompts[0:100]) + "_" + str(random.randint(0, 55555555555555)) + ".png"
+            tmpn = "generated/img_" + str(chat.id) + "_" + sanitize(prompts[0:100]) + "_" + str(cmt()) + ".png"
             png = Image.open(io.BytesIO(image_data))
             png.save(tmpn)
             pd = open(tmpn, 'rb')
@@ -441,59 +485,69 @@ async def start_message(message):
     await bot.send_message(chat_id=message.chat.id, text=ld)
 
 
+@bot.message_handler(commands=['me'])
+async def start_message(message):
+    del chat_face[message.chat.id]
+    await bot.send_message(chat_id=message.chat.id, text='Face cleared')
+
+
+@bot.message_handler(commands=['style'])
+async def start_message(message):
+    del chat_style[message.chat.id]
+    await bot.send_message(chat_id=message.chat.id, text='Style cleared')
+
+
 @bot.message_handler(content_types='text')
 async def message_reply(message):
-    log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
     prompt = message.text
-    wf = wf_t2i
-    lora = get_lora(prompt)
-    model = get_model(prompt)
-    if lora:
-        wf = wf_lora_t2i
-        if ('/face' in prompt):
-            wf = wf_lora_t2i_facefix_upscale
-            prompt = prompt.replace('/face', '')
-        if ('/upscale' in prompt):
-            wf = wf_lora_t2i_upscale
-            prompt = prompt.replace('/upscale', '')
-    else:
-        if ('/face' in prompt):
-            wf = wf_t2i_facefix_upscale
-            prompt = prompt.replace('/face', '')
-        if ('/upscale' in prompt):
-            wf = wf_t2i_upscale
-            prompt = prompt.replace('/upscale', '')
+    cfg = {}
 
-    await t2i(message.chat, message.text, wf, lora, model)
+    log.info("T2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.text)
+    await comfy(message.chat, message.text, cfg)
 
 
 @bot.message_handler(content_types='photo')
 async def message_reply(message):
-    log.info("I2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.caption)
     prompt = message.caption
-    wf = wf_i2i
-    lora = get_lora(prompt)
-    model = get_model(prompt)
-    if lora:
-        wf = wf_lora_i2i
-        if ('/face' in prompt):
-            wf = wf_lora_i2i_facefix_upscale
-            prompt = prompt.replace('/face', '')
-        if ('/upscale' in prompt):
-            wf = wf_lora_i2i_upscale
-            prompt = prompt.replace('/upscale', '')
-    else:
-        if ('/face' in prompt):
-            wf = wf_i2i_facefix_upscale
-            prompt = prompt.replace('/face', '')
-        if ('/upscale' in prompt):
-            wf = wf_i2i_upscale
-            prompt = prompt.replace('/upscale', '')
+    cfg = {}
 
-    await i2i(message.chat, prompt, wf, message.photo, lora, model)
+    img_id = message.photo[len(message.photo)-1].file_id
+    tmp = (await bot.get_file(img_id))
+    imgf = (await bot.download_file(tmp.file_path))
+
+    if ('/me' in prompt):
+        fn = os.getcwd() + "/upload/face_" + str(message.chat.id) + "_" + str(cmt()) + ".png"
+        with open(fn, 'wb') as new_file:
+            new_file.write(imgf)
+        chat_face[message.chat.id] = fn
+        log.info("FACE:%s (%s %s)", message.chat.id, message.chat.first_name, message.chat.username)
+        with open('chat_face.pkl', 'wb') as f:
+            pickle.dump(chat_face, f)
+        return
+
+    if ('/style' in prompt):
+        fn = os.getcwd() + "/upload/style_" + str(message.chat.id) + "_" + str(cmt()) + ".png"
+        with open(fn, 'wb') as new_file:
+            new_file.write(imgf)    
+        chat_style[message.chat.id] = fn
+        log.info("STYLE:%s (%s %s)", message.chat.id, message.chat.first_name, message.chat.username)
+        with open('chat_style.pkl', 'wb') as f:
+            pickle.dump(chat_style, f)
+        return
+
+    fn = os.getcwd() + "/upload/source_" + str(message.chat.id) + "_" + str(cmt()) + ".png"
+    cfg['source_image'] = fn
+
+    with open(fn, 'wb') as new_file:
+        new_file.write(imgf)    
+
+    log.info("I2I:%s (%s %s) '%s'", message.chat.id, message.chat.first_name, message.chat.username, message.caption)
+
+    await comfy(message.chat, prompt, cfg)
 
 
 log.info("Starting bot")
 
 if __name__ == '__main__':
     asyncio.run(bot.infinity_polling())
+
