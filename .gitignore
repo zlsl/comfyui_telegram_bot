@@ -1,4 +1,4 @@
-.pkl
+*.pkl
 config.yaml
 bot.log
 nohup.out
