@@ -259,17 +259,21 @@ def configure(prompt, cfg):
         negative_prompt = NEGATIVE_PROMPT
 
     if (config['id'] in chat_face):
-        config['face_image'] = chat_face[config['id']]
+        config['face_image'] = chat_face[config['id']]['file']
+        config['face_weight'] = chat_face[config['id']]['weight']
         config['face'] = True  
     else:
         config['face_image'] = os.getcwd() + '/assets/blank.png'
+        config['face_weight'] = 0
         config['face'] = False
 
     if (config['id'] in chat_style):
-        config['style_image'] = chat_style[config['id']]
+        config['style_image'] = chat_style[config['id']]['file']
+        config['style_weight'] = chat_style[config['id']]['weight']
         config['style'] = True  
     else:
         config['style_image'] = os.getcwd() + '/assets/blank.png'
+        config['style_weight'] = 0
         config['style'] = False
         
     if (not 'source_image' in config):
@@ -308,12 +312,12 @@ def setup_workflow(prompt, config):
             if (workflow[node]['class_type'] == 'IPAdapterApply'): # face-5 style-31
                 if (node == "5"): #face
                     if (config['face']):
-                        workflow[node]['inputs']['weight'] = config['ipa_strength']
+                        workflow[node]['inputs']['weight'] = config['face_weight']
                     else:
                         workflow[node]['inputs']['weight'] = 0
                 if (node == "31"): #style
                     if (config['style']):
-                        workflow[node]['inputs']['weight'] = config['ipa_strength']
+                        workflow[node]['inputs']['weight'] = config['style_weight']
                     else:
                         workflow[node]['inputs']['weight'] = 0
 
@@ -353,11 +357,9 @@ def setup_workflow(prompt, config):
             if (workflow[node]['inputs']['image'] == 'source image'):
                workflow[node]['inputs']['image'] = config['source_image']
 
-        if ("image" in workflow[node]['inputs']):
             if (workflow[node]['inputs']['image'] == 'face image'):
                workflow[node]['inputs']['image'] = config['face_image']
 
-        if ("image" in workflow[node]['inputs']):
             if (workflow[node]['inputs']['image'] == 'style image'):
                workflow[node]['inputs']['image'] = config['style_image']
 
@@ -375,7 +377,7 @@ def setup_workflow(prompt, config):
                 workflow[node]['inputs']['strength_model'] = config['lora']['strength']
                 workflow[node]['inputs']['strength_clip'] = 1
             else:
-                workflow[node]['inputs']['lora_name'] = os.getcwd() + '/assets/default_lora.safetensors'
+                workflow[node]['inputs']['lora_name'] = 'default_lora.safetensors'
                 workflow[node]['inputs']['strength_model'] = 0
                 workflow[node]['inputs']['strength_clip'] = 0
 
@@ -487,14 +489,24 @@ async def start_message(message):
 
 @bot.message_handler(commands=['me'])
 async def start_message(message):
-    del chat_face[message.chat.id]
-    await bot.send_message(chat_id=message.chat.id, text='Face cleared')
+    w = re.findall('\\d+\\.?\\d*', message.text)
+    if w:
+        chat_face[message.chat.id]['weight'] = w[0]
+        await bot.send_message(chat_id=message.chat.id, text='Set face weight')
+    else:
+        del chat_face[message.chat.id]
+        await bot.send_message(chat_id=message.chat.id, text='Face cleared')
 
 
 @bot.message_handler(commands=['style'])
 async def start_message(message):
-    del chat_style[message.chat.id]
-    await bot.send_message(chat_id=message.chat.id, text='Style cleared')
+    w = re.findall('\\d+\\.?\\d*', message.text)
+    if w:
+        chat_style[message.chat.id]['weight'] = w[0]
+        await bot.send_message(chat_id=message.chat.id, text='Set style weight')
+    else:
+        del chat_style[message.chat.id]
+        await bot.send_message(chat_id=message.chat.id, text='Style cleared')
 
 
 @bot.message_handler(content_types='text')
@@ -516,23 +528,36 @@ async def message_reply(message):
     imgf = (await bot.download_file(tmp.file_path))
 
     if ('/me' in prompt):
+        w = re.findall('\\d+\\.?\\d*', prompt)
+        if w:
+            weight = w[0]
+        else:
+            weight = "1.0"
+
         fn = os.getcwd() + "/upload/face_" + str(message.chat.id) + "_" + str(cmt()) + ".png"
         with open(fn, 'wb') as new_file:
             new_file.write(imgf)
-        chat_face[message.chat.id] = fn
+        chat_face[message.chat.id] = {'file' : fn, 'weight' : weight}
         log.info("FACE:%s (%s %s)", message.chat.id, message.chat.first_name, message.chat.username)
         with open('chat_face.pkl', 'wb') as f:
             pickle.dump(chat_face, f)
+        await bot.send_message(chat_id=message.chat.id, text='Face image set. Use /face x.xx to set weight (0.5 for example)')
         return
 
     if ('/style' in prompt):
+        w = re.findall('\\d+\\.?\\d*', prompt)
+        if w:
+            weight = w[0]
+        else:
+            weight = "1.0"
         fn = os.getcwd() + "/upload/style_" + str(message.chat.id) + "_" + str(cmt()) + ".png"
         with open(fn, 'wb') as new_file:
             new_file.write(imgf)    
-        chat_style[message.chat.id] = fn
+        chat_style[message.chat.id] = {'file' : fn, 'weight' : weight}
         log.info("STYLE:%s (%s %s)", message.chat.id, message.chat.first_name, message.chat.username)
         with open('chat_style.pkl', 'wb') as f:
             pickle.dump(chat_style, f)
+        await bot.send_message(chat_id=message.chat.id, text='Style image set. Use /style x.xx to set weight (0.5 for example)')
         return
 
     fn = os.getcwd() + "/upload/source_" + str(message.chat.id) + "_" + str(cmt()) + ".png"
