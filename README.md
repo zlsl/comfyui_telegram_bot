@@ -2,7 +2,7 @@
 
 ## Telegram-бот для интеграции ComfyUI
 
-Работают text2image, image2image. Есть поддержка LoRA
+Работают text2image, image2image. Есть поддержка LoRA. Через IPAdapter работает замена лиц, стилизация
 
 Бот для теста: @stablecats_bot
 
@@ -41,6 +41,10 @@ comfyui:
   DEFAULT_CONTROLNET: 'control_v11f1e_sd15_tile.pth' - модель ControlNet для image2image
   SAMPLER: 'uni_pc' - используемый сэмплер
   SAMPLER_STEPS: 30 - количество шагов денойса
+  MAX_STEPS: 100
+  TOKEN_MERGE_RATIO: '0.6'
+  CLIP_SKIP: '-1'
+  CONTROLNET_STRENGTH: '0.9'
   DEFAULT_WIDTH: 512
   DEFAULT_HEIGHT: 512
   MAX_WIDTH: 2048 - ограничение ширины     
@@ -51,7 +55,7 @@ comfyui:
 
 ## Описание работы
 
-Используются различные workflow для генерации, в каталоги workflows они находятся в формате ComfyUI API
+Используются workflow для генерации, в каталоги workflows они находятся в формате ComfyUI API
 
 По-умолчанию при получении чистого промпта генерируется картинка с размерами DEFAULT_WIDTHxDEFAULT_HEIGHT, размер можно указывать в формате WIDTHxHEIGHT
 
@@ -85,14 +89,16 @@ comfyui:
 
 `/loras` - список доступных LoRA
 
+
+
 Исходная картинка | Результат
 --- | ---
 ![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_src.jpg) | ![Исходная картинка](https://raw.githubusercontent.com/zlsl/comfyui_telegram_bot/main/examples/i2i_result.jpg) Милый демон с белой змеиной чешуёй, изумрудные глаза, острые когти 1024x1024
 
 
-В каталоге img2img сохраняются картинки отправленные боту
+В каталоге upload сохраняются картинки отправленные боту
 
-Каталог tmp - результаты генераций
+Каталог generated - результаты генераций
 
 
 ## Команды
@@ -101,8 +107,11 @@ comfyui:
 
 `/upscale` - апскейл готовой картинки
 
-`/face` - с коррекцией лиц и апскейлом (каждое лицо на картинке увеличит время генерации)
+`/face` - коррекциея лиц (каждое лицо на картинке увеличит время генерации)
 
+`/me` - установка фото лица (пустая команда для очистки)
+
+`/style` - установка картинки для стилизации (пустая команда для очистки)
 
 ## Ограничение доступа
 
@@ -126,56 +135,4 @@ whitelist:
 ```
 loras:
   - 'vlozhkin|vlozhkin3.safetensors|1|vlozhkin style illustration'
-```
-
-
-## Как добавить свой workflow
-
-Используются следующий файлы:
-
-- t2i.json - базовый text2image
-- t2i_upscale.json - text2image с апскейлом
-- t2i_facefix_upscale.json - text2image с апскейлом и фиксом лиц
-- i2i.json - базовый image2image
-- i2i_upscale.json - image2image с апскейлом
-- i2i_facefix_upscale.json - image2image с апскейлом и фиксом лиц
-
-В ComfyUI необходимо включить dev режим (в настройках), появится пункт меню *Save (API Format)*
-
-В workflow необходимо:
-
-1. В тексте с ClipTextEncode для позитивного промпта поставить значение `positive prompt`
-2. В тексте с ClipTextEncode для негативного промпта поставить значение `negative prompt`
-3. Для image2image в коде json файла выставить в блоке `LoadImage` значение "inputs" - "image" в *source image*
-
-Пример фрагмента json:
-
-```
-"4": {
-    "inputs": {
-      "text": "positive prompt",
-      "clip": [
-        "1",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode"
-  },
-  "5": {
-    "inputs": {
-      "text": "negative prompt",
-      "clip": [
-        "1",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode"
-  },
-  "6": {
-    "inputs": {
-      "image": "source image",
-      "choose file to upload": "image"
-    },
-    "class_type": "LoadImage"
-  },
 ```
